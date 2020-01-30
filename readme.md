@@ -16,7 +16,7 @@
 
 Можно почитать и на github:
 
-0. [Предисловие](manuscript/0-intro.md)
+0. [Предисловие](manuscript/0-intro.md) - очень короткое, но важное
 1. [Плохие привычки](manuscript/1-bad-habits.md)
 2. [Внедрение зависимостей](manuscript/2-di.md)
 3. [Безболезненный рефакторинг](manuscript/3-painless-refactoring.md)
