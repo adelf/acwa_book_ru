@@ -8,7 +8,13 @@
 
 На данный момент закончен перевод 9 глав. Осталось 4. За обновлениями можно следить на канале - https://t.me/adelf_on_programming
 
-pdf, epub, mobi варианты скоро будут доступны, а пока можно почитать на github:
+Текущая версия в форматах: 
+
+* [pdf](https://github.com/adelf/acwa_book_ru/releases/download/v0.1/acwa_rus-preview.pdf)
+* [epub](https://github.com/adelf/acwa_book_ru/releases/download/v0.1/acwa_rus-preview.epub)
+* [mobi](https://github.com/adelf/acwa_book_ru/releases/download/v0.1/acwa_rus-preview.mobi)
+
+Можно почитать и на github:
 
 0. [Предисловие](manuscript/0-intro.md)
 1. [Плохие привычки](manuscript/1-bad-habits.md)
