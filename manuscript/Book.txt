@@ -1,2 +1,9 @@
 0-intro.md
 1-bad habits.md
+2-di.md
+3-painless-refactoring.md
+4-application-layer.md
+5-error-handling.md
+6-validation.md
+7-events.md
+8-unit-test.md
