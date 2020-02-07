@@ -161,7 +161,7 @@ OK (5 tests, 5 assertions)
 ```php
 function cutString(string $source, int $limit): string
 {
-    if(strlen($source) <= strlen($source)) {
+    if(strlen($source) <= $limit) {
         return $source;
     }
 
@@ -198,7 +198,7 @@ function cutString(string $source, int $limit): string
             'The limit is too low');
     }
         
-    if(strlen($source) <= strlen($source)) {
+    if(strlen($source) <= $limit) {
         return $source;
     }
 
