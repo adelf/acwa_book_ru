@@ -642,7 +642,6 @@ class BusinessException extends \RuntimeException
 "throws Exception" вообще не дает никакой полезной информации.
 Это просто заставляет клиентский код повторять этот бесполезный "throws Exception" в своей сигнатуре.
 
-Я вернусь к исключениям в главе про I'll return to exceptions in the Domain layer chapter, when this way with unchecked exceptions will become not very convenient.
 Я вернусь к исключениям в главе про Доменный слой, когда этот подход непроверямыми исключениями станет не очень удобным.
 
 ## Пара слов в конце главы
