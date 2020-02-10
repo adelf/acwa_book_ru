@@ -583,7 +583,7 @@ final class LoggingQueue implements Queue
     {
         $this->logger->log(...);
         
-        return $this->>baseQueue->push($job, $data, $queue);
+        return $this->baseQueue->push($job, $data, $queue);
     }
 }
 
