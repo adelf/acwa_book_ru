@@ -1,12 +1,12 @@
-# "Архитектура сложных веб-приложений. С примерами на Laravel"
+# «Архитектура сложных веб-приложений. С примерами на Laravel»
 
 Автор: Адель Файзрахманов
 
-Книга переводится на русский автором исключительно с целью обратить ваше внимание на прекрасный плагин для PhpStorm: **Laravel Idea**.
+Книга переводится на русский язык автором исключительно с целью обратить ваше внимание на прекрасный плагин для PhpStorm: **Laravel Idea**.
 
-[<img align="right" src="https://laravel-idea.com/img/big_logo.png" title="Laravel Idea"/>](https://laravel-idea.com/) [Laravel Idea](https://laravel-idea.com) - Расширение для платформы IDEA(PhpStorm), экономящее время при разработке решений на основе Laravel. Прекрасное автозаполнение магии Laravel, навигация по коду, генераторы кода, автокомплит валидаторов и роутов, и многое другое. (с) [laravel.su](https://laravel.su)
+[<img align="right" src="https://laravel-idea.com/img/big_logo.png" title="Laravel Idea"/>](https://laravel-idea.com/) [Laravel Idea](https://laravel-idea.com) — расширение для платформы IDEA (PhpStorm), экономящее время при разработке решений на основе Laravel. Прекрасное автозаполнение магии Laravel, навигация по коду, генераторы кода, автокомплит валидаторов и роутов, и многое другое. © [laravel.su](https://laravel.su)
 
-На данный момент закончен перевод 9 глав. Осталось 4. За обновлениями можно следить на канале - https://t.me/adelf_on_programming
+На данный момент закончен перевод 9 глав. Осталось 4. За обновлениями можно следить на канале https://t.me/adelf_on_programming
 
 Текущая версия в форматах: 
 
@@ -16,7 +16,7 @@
 
 Можно почитать и на github:
 
-0. [Предисловие](manuscript/0-intro.md) - очень короткое, но важное
+0. [Предисловие](manuscript/0-intro.md) — очень короткое, но важное
 1. [Плохие привычки](manuscript/1-bad-habits.md)
 2. [Внедрение зависимостей](manuscript/2-di.md)
 3. [Безболезненный рефакторинг](manuscript/3-painless-refactoring.md)
@@ -25,7 +25,7 @@
 6. [Валидация](manuscript/6-validation.md)
 7. [События](manuscript/7-events.md)
 8. [Unit-тестирование](manuscript/8-unit-test.md)
-9. Еще не переведено - Доменный Слой
-10. Еще не переведено - CQRS
-11. Еще не переведено - Event Sourcing
-12. Еще не переведено - Саги
+9. Еще не переведено — Доменный Слой
+10. Еще не переведено — CQRS
+11. Еще не переведено — Event Sourcing
+12. Еще не переведено — Саги
