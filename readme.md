@@ -10,9 +10,9 @@
 
 Текущая версия в форматах: 
 
-* [pdf](https://github.com/adelf/acwa_book_ru/releases/download/v0.1/acwa_rus-preview.pdf)
-* [epub](https://github.com/adelf/acwa_book_ru/releases/download/v0.1/acwa_rus-preview.epub)
-* [mobi](https://github.com/adelf/acwa_book_ru/releases/download/v0.1/acwa_rus-preview.mobi)
+* [pdf](https://github.com/adelf/acwa_book_ru/releases/download/0.2/acwa_rus-preview.pdf)
+* [epub](https://github.com/adelf/acwa_book_ru/releases/download/0.2/acwa_rus-preview.epub)
+* [mobi](https://github.com/adelf/acwa_book_ru/releases/download/0.2/acwa_rus-preview.mobi)
 
 Можно почитать и на github:
 
