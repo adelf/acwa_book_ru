@@ -939,7 +939,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
 }
 ```
 
-Теперь, если кто-то добавить вызов фасада, тест упадёт с ошибкой:
+Теперь, если кто-то добавит вызов фасада, тест упадёт с ошибкой:
 
 ```
 Error : Class 'SomeFacade' not found
