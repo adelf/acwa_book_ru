@@ -1,6 +1,6 @@
 # Валидация
 
-A> "...But, now you come to me, and you say: "Don Corleone, give me justice." But you don't ask with respect. You don't offer friendship..."
+> "...But, now you come to me, and you say: "Don Corleone, give me justice." But you don't ask with respect. You don't offer friendship..."
 
 ## Валидация связанная с базой данных
 
