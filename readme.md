@@ -6,7 +6,7 @@
 
 [<img align="right" src="https://laravel-idea.com/img/big_logo.png" title="Laravel Idea"/>](https://laravel-idea.com/) [Laravel Idea](https://laravel-idea.com) — расширение для платформы IDEA (PhpStorm), экономящее время при разработке решений на основе Laravel. Прекрасное автозаполнение магии Laravel, навигация по коду, генераторы кода, автокомплит валидаторов и роутов, и многое другое. © [laravel.su](https://laravel.su)
 
-На данный момент закончен перевод 9 глав. Осталось 4. За обновлениями можно следить на канале https://t.me/adelf_on_programming
+На данный момент закончен перевод 11 глав. Осталось 2. За обновлениями можно следить на канале https://t.me/adelf_on_programming
 
 Текущая версия в форматах: 
 
@@ -25,7 +25,7 @@
 6. [Валидация](manuscript/6-validation.md)
 7. [События](manuscript/7-events.md)
 8. [Unit-тестирование](manuscript/8-unit-test.md)
-9. Еще не переведено — Доменный Слой
-10. Еще не переведено — CQRS
+9. [Доменный Слой](manuscript/9-domain-layer.md)
+10. [CQRS](manuscript/10-cqrs.md)
 11. Еще не переведено — Event Sourcing
 12. Еще не переведено — Саги

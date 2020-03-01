@@ -7,3 +7,5 @@
 6-validation.md
 7-events.md
 8-unit-test.md
+9-domain-layer.md
+10-cqrs.md
