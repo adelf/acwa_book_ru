@@ -769,7 +769,7 @@ final class ImageGuard
         bool $weakerRules): bool
     {
         // Проверки используя $this->googleVision,
-        // $weakerRules и $fileContent
+        // $weakerRules и $imageContent
     }
 }
 ```
