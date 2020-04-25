@@ -8,6 +8,14 @@
 
 Telegram канал автора - https://t.me/adelf_on_programming
 
+Книга в форматах: 
+
+* [pdf](https://github.com/adelf/acwa_book_ru/releases/download/v1.0/acwa_rus-preview.pdf)
+* [epub](https://github.com/adelf/acwa_book_ru/releases/download/v1.0/acwa_rus-preview.epub)
+* [mobi](https://github.com/adelf/acwa_book_ru/releases/download/v1.0/acwa_rus-preview.mobi)
+
+Можно читать прямо на github:
+
 0. [Предисловие](manuscript/0-intro.md) — очень короткое, но важное
 1. [Плохие привычки](manuscript/1-bad-habits.md)
 2. [Внедрение зависимостей](manuscript/2-di.md)
