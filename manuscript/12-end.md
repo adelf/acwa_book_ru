@@ -19,6 +19,6 @@
 * https://aka.ms/cqrs - CQRS journey by Microsoft
 * https://github.com/prooph/proophessor-do - Prooph library example project
 
-## Unit тестирования
+## Unit тестирование
 
 * F.I.R.S.T Principles of Unit Testing
