@@ -6,9 +6,7 @@
 
 [<img align="right" src="https://laravel-idea.com/img/big_logo.png" title="Laravel Idea"/>](https://laravel-idea.com/) [Laravel Idea](https://laravel-idea.com) — расширение для платформы IDEA (PhpStorm), экономящее время при разработке решений на основе Laravel. Прекрасное автозаполнение магии Laravel, навигация по коду, генераторы кода, автокомплит валидаторов и роутов, и многое другое. © [laravel.su](https://laravel.su)
 
-На данный момент закончен перевод 11 глав. Осталось 2. За обновлениями можно следить на канале https://t.me/adelf_on_programming
-
-С генерацией в формате pdf, epub и mobi возникли временные проблемы. Скоро всё будет ок. А пока можно почитать и на github:
+Telegram канал автора - https://t.me/adelf_on_programming
 
 0. [Предисловие](manuscript/0-intro.md) — очень короткое, но важное
 1. [Плохие привычки](manuscript/1-bad-habits.md)
@@ -21,5 +19,5 @@
 8. [Unit-тестирование](manuscript/8-unit-test.md)
 9. [Доменный Слой](manuscript/9-domain-layer.md)
 10. [CQRS](manuscript/10-cqrs.md)
-11. Еще не переведено — Event Sourcing
-12. Еще не переведено — Саги
+11. [Event Sourcing](manuscript/11-es.md)
+12. [Заключение](manuscript/12-end.md)
