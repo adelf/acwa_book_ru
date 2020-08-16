@@ -4,35 +4,37 @@
 Приложение растёт и в форму регистрации добавились новые поля: дата рождения и опция согласия получения email-рассылки.
 
 ```php
-public function store(
-    Request $request, 
-    ImageUploader $imageUploader) 
-{
-    $this->validate($request, [
-        'email' => 'required|email',
-        'name' => 'required',
-        'avatar' => 'required|image',
-        'birthDate' => 'required|date',
-    ]);
-    
-    $avatarFileName = ...;    
-    $imageUploader->upload(
-        $avatarFileName, $request->file('avatar'));
+class UserController {
+    public function store(
+        Request $request, 
+        ImageUploader $imageUploader) 
+    {
+        $this->validate($request, [
+            'email' => 'required|email',
+            'name' => 'required',
+            'avatar' => 'required|image',
+            'birthDate' => 'required|date',
+        ]);
         
-    $user = new User();
-    $user->email = $request['email'];
-    $user->name = $request['name'];
-    $user->avatarUrl = $avatarFileName;
-    $user->subscribed = $request->has('subscribed');
-    $user->birthDate = new DateTime($request['birthDate']);
-    
-    if(!$user->save()) {
-        return redirect()->back()->withMessage('...');
+        $avatarFileName = ...;    
+        $imageUploader->upload(
+            $avatarFileName, $request->file('avatar'));
+            
+        $user = new User();
+        $user->email = $request['email'];
+        $user->name = $request['name'];
+        $user->avatarUrl = $avatarFileName;
+        $user->subscribed = $request->has('subscribed');
+        $user->birthDate = new DateTime($request['birthDate']);
+        
+        if(!$user->save()) {
+            return redirect()->back()->withMessage('...');
+        }
+        
+        \Email::send($user->email, 'Hi email');
+            
+        return redirect()->route('users');
     }
-    
-    \Email::send($user->email, 'Hi email');
-        
-    return redirect()->route('users');
 }
 ```
 Потом у приложения появляется API для мобильного приложения и регистрация пользователей должна быть реализована и там.
@@ -88,14 +90,14 @@ public function doSomething(Request $request, $id)
 ```
 Этот метод реализует как минимум две ответственности: логику работы с HTTP запросом/ответом и бизнес-логику.
 Каждый раз когда разработчик меняет http-логику, он вынужден читать много кода бизнес-логики и наоборот.
-Такой код сложнее дебажить и рефакторить, поэтому вынесение логики в сервис-классы тоже может быть хорошой идеей для этого проекта.
+Такой код сложнее дебажить и рефакторить, поэтому вынесение логики в сервис-классы тоже может быть хорошей идеей для этого проекта.
 
 ## Передача данных запроса
 
 Начнем создавать класс **UserService**.
 Первой проблемой будет передача данных запроса туда.
 Некоторым методам не нужно много данных и, например, для удаления статьи нужен только её id.
-Однако, для таких действий, как регистрация пользователя, данных может понадобиться много.
+Однако для таких действий как регистрация пользователя может понадобиться много данных.
 Мы не можем использовать класс **Request**, поскольку он доступен только для web. Попробуем простые массивы:
 
 ```php
@@ -137,20 +139,22 @@ final class UserService
     }
 }
 
-public function store(Request $request, UserService $userService) 
-{
-    $this->validate($request, [
-        'email' => 'required|email',
-        'name' => 'required',
-        'avatar' => 'required|image',
-        'birthDate' => 'required|date',
-    ]);
-    
-    if (!$userService->create($request->all())) {
-        return redirect()->back()->withMessage('...');
+class UserController {
+    public function store(Request $request, UserService $userService) 
+    {
+        $this->validate($request, [
+            'email' => 'required|email',
+            'name' => 'required',
+            'avatar' => 'required|image',
+            'birthDate' => 'required|date',
+        ]);
+        
+        if (!$userService->create($request->all())) {
+            return redirect()->back()->withMessage('...');
+        }
+        
+        return redirect()->route('users');
     }
-    
-    return redirect()->route('users');
 }
 ```
 Я просто вынес логику без каких-либо изменений и вижу проблему.
@@ -250,25 +254,27 @@ final class UserService
     }
 }
 
-public function store(Request $request, UserService $userService) 
-{
-    $this->validate($request, [
-        'email' => 'required|email',
-        'name' => 'required',
-        'avatar' => 'required|image',
-        'birthDate' => 'required|date',
-    ]);
-    
-    $dto = new UserCreateDto(
-        $request['email'], 
-        new DateTime($request['birthDate']), 
-        $request->has('subscribed'));
-    
-    if (!$userService->create($dto)) {
-        return redirect()->back()->withMessage('...');
+class UserController {
+    public function store(Request $request, UserService $userService) 
+    {
+        $this->validate($request, [
+            'email' => 'required|email',
+            'name' => 'required',
+            'avatar' => 'required|image',
+            'birthDate' => 'required|date',
+        ]);
+        
+        $dto = new UserCreateDto(
+            $request['email'], 
+            new DateTime($request['birthDate']), 
+            $request->has('subscribed'));
+        
+        if (!$userService->create($dto)) {
+            return redirect()->back()->withMessage('...');
+        }
+        
+        return redirect()->route('users');
     }
-    
-    return redirect()->route('users');
 }
 ```
 Теперь это выглядит канонично.
@@ -364,20 +370,28 @@ final class PostService
 В примере все выглядит неплохо, но если попробовать вызвать метод сервиса из консоли, то нужно будет опять доставать сущность **Post** из базы данных.
 
 ```php
-public function handle(PostService $postService)
-{
-    $post = Post::find(...);
-    
-    if (!$post) {
-        $this->error(...);
-        return;
+class PostPublish extends Command {
+
+    //...    
+
+    public function handle(PostService $postService)
+    {
+        $post = Post::find(...);
+        
+        if (!$post) {
+            $this->error(...);
+            return;
+        }
+        
+        if (!$postService->publish($post)) {
+            $this->error(...);
+        } else {
+            $this->info(...);
+        }
     }
-    
-    if (!$postService->publish($post)) {
-        $this->error(...);
-    } else {
-        $this->info(...);
-    }
+
+    //...
+
 }
 ```
 Это пример нарушения Принципа единственной ответственности (SRP) и высокой связанности (coupling).
