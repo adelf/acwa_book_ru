@@ -312,24 +312,24 @@ class User extends Authenticatable
 ```php
 final class PollService
 {
-public function create(PollCreateDto $request)
-{
-    //...
-    $this->connection->transaction(function() use (...) {
-        $poll = new Poll();
-        $poll->question = $filteredRequest->getQuestion();
+    public function create(PollCreateDto $request)
+    {
         //...
-        $poll->save();
-        
-        foreach($filteredRequest->getOptionTexts() as $optionText){
-            $pollOption = new PollOption();
-            $pollOption->poll_id = $poll->id;
-            $pollOption->text = $optionText;
-            $pollOption->save();
-        }
-    });
-    //...
-}
+        $this->connection->transaction(function() use (...) {
+            $poll = new Poll();
+            $poll->question = $filteredRequest->getQuestion();
+            //...
+            $poll->save();
+
+            foreach($filteredRequest->getOptionTexts() as $optionText){
+                $pollOption = new PollOption();
+                $pollOption->poll_id = $poll->id;
+                $pollOption->text = $optionText;
+                $pollOption->save();
+            }
+        });
+        //...
+    }
 }
 ```
 
