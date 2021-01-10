@@ -412,18 +412,18 @@ final class PollOptionAdded
 
 final class PollService
 {
-public function addOption(PollAddOptionDto $request)
-{
-    $poll = Poll::findOrFail($request->getPollId());
-    
-    if($poll->options->count() >= Poll::MAX_POSSIBLE_OPTIONS) {
-        throw new BusinessException('Max options amount exceeded');
-    }
+    public function addOption(PollAddOptionDto $request)
+    {
+        $poll = Poll::findOrFail($request->getPollId());
 
-    $poll->options()->create(...);
-    
-    $this->dispatcher->dispatch(new PollOptionAdded($poll));
-}
+        if($poll->options->count() >= Poll::MAX_POSSIBLE_OPTIONS) {
+            throw new BusinessException('Max options amount exceeded');
+        }
+
+        $poll->options()->create(...);
+
+        $this->dispatcher->dispatch(new PollOptionAdded($poll));
+    }
 }
 
 final class SomeListener implements ShouldQueue
