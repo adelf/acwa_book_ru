@@ -251,7 +251,7 @@ final class Job
         $this->description = $description;
     }
 
-    public static function post(Customer $client, 
+    public static function post(Client $client, 
         JobDescription $description): Job
     {
         return new Job($client, $description);
