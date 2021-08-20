@@ -467,7 +467,7 @@ final class PublishPostCommand
     }
 }
 ```
-В шаблоне **Command Bus** суффикс**Command** используется для DTO-классов, а классы исполняющие команды называются **CommandHandler**.
+В шаблоне **Command Bus** суффикс **Command** используется для DTO-классов, а классы исполняющие команды называются **CommandHandler**.
 
 ```php
 final class ChangeUserPasswordCommand
