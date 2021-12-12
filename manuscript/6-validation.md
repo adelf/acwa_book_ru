@@ -381,7 +381,7 @@ final class RegisterUserDto
 {
     // Поля и конструктор
     
-    public function getUserName(): UserName
+    public function getName(): UserName
     {...}
     
     public function getEmail(): Email
