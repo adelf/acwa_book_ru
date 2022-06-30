@@ -181,8 +181,8 @@ ImageUploader::upload(
 ImageUploader::upload(
     $request->file('avatar'), 
     'avatars', 
-    dontBan = true, 
-    weakerRules = false
+    dontBan: true, 
+    weakerRules: false
 );
 ```
 
