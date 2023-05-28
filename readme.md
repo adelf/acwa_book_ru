@@ -1,14 +1,10 @@
 # «Архитектура сложных веб-приложений. С примерами на Laravel»
 
-Автор: Адель Файзрахманов
-
-Книга переводится на русский язык автором исключительно с целью обратить ваше внимание на прекрасный плагин для PhpStorm: **Laravel Idea**.
+Автор: Адель Файзрахманов, автор плагин **Laravel Idea** для **PhpStorm**.
 
 [<img align="right" src="https://laravel-idea.com/img/big_logo.png" title="Laravel Idea"/>](https://laravel-idea.com/) [Laravel Idea](https://laravel-idea.com) — расширение для платформы IDEA (PhpStorm), экономящее время при разработке решений на основе Laravel. Прекрасное автозаполнение магии Laravel, навигация по коду, генераторы кода, автокомплит валидаторов и роутов, и многое другое. © [laravel.su](https://laravel.su)
 
 Telegram канал автора - https://t.me/adelf_on_programming
-
-Книга в форматах pdf, epub и mobi скоро буду доступны. А пока можно читать прямо на github:
 
 0. [Предисловие](manuscript/0-intro.md) — очень короткое, но важное
 1. [Плохие привычки](manuscript/1-bad-habits.md)
