@@ -125,44 +125,18 @@ $post->title = $request->getTitle();
 ```php
 class RegisterUserDto
 {
-    /** @var string */
-    private $name;
-    
-    /** @var string */
-    private $email;
-    
-    /** @var DateTime */
-    private $birthDate;
-    
     public function __construct(
-        string $name, string $email, DateTime $birthDate) 
-    {
-        $this->name = $name;
-        $this->email = $email;
-        $this->birthDate = $birthDate;
-    }
-    
-    public function getName(): string
-    {
-        return $this->name;
-    }
-    
-    public function getEmail(): string
-    {
-        return $this->email;
-    }
-        
-    public function getBirthDate(): DateTime
-    {
-        return $this->birthDate;
-    }
+        public string $name,
+        public string $email,
+        public DateTime $birthDate,
+    ) {}
 }
 
 class UserService
 {
     public function register(RegisterUserDto $request)
     {
-        $existingUser = User::whereEmail($request->getEmail())
+        $existingUser = User::whereEmail($request->email)
             ->first();
         
         if($existingUser !== null) {
@@ -170,9 +144,9 @@ class UserService
         }
         
         $user = new User();
-        $user->name = $request->getName();
-        $user->email = $request->getEmail();
-        $user->birthDate = $request->getBirthDate();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->birthDate = $request->birthDate;
         
         $user->saveOrFail();
     }
@@ -184,7 +158,7 @@ class UserService
 ```php
 $userService->register(new RegisterUserDto('', '', new DateTime()));
 ```
-Никто не может поручиться, что в **getName()** будет лежать непустая строка, а в **getEmail()** строка с верным email адресом.
+Никто не может поручиться, что в **name** будет лежать непустая строка, а в **email** строка с верным email адресом.
 Что делать?
 Можно дублировать валидацию в сервисном классе:
 
@@ -193,11 +167,11 @@ class UserService
 {
     public function register(RegisterUserDto $request)
     {
-        if(empty($request->getName())) {
+        if(empty($request->name)) {
             throw //
         }
         
-        if(!filter_var($request->getEmail(), 
+        if(!filter_var($request->email, 
                         FILTER_VALIDATE_EMAIL)) {
             throw //
         }
@@ -206,8 +180,7 @@ class UserService
     }
 }
 ```
-Или сделать такую же валидацию в конструкторе DTO класса, но в приложении будет куча мест, где нужно будет получать email, имя или подобные данные. Куча кода будет дублироваться.
-Я могу предложить два варианта.
+Или сделать такую же валидацию в конструкторе DTO класса, но в приложении будет куча мест, где нужно будет получать email, имя или подобные данные. Много кода будет дублироваться. Я могу предложить два варианта.
 
 ## Валидация аннотациями
 
