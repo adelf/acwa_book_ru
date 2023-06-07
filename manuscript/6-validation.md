@@ -38,7 +38,7 @@ class PostService
 }
 ```
 
-Я только краткости ради вернул валидацию обратно в контроллер.
+Я, краткости ради, вернул валидацию обратно в контроллер.
 Одной из проверок является существование нужной категории в базе данных. 
 Давайте представим, что в будущем в модель категорий будет добавлен трейт **SoftDeletes**.
 Этот функционал будет помечать строки в базе данных как удаленные вместо того, чтобы физически их удалять, а также не включать строки, помеченные как удаленные в результаты запросов.
@@ -106,16 +106,16 @@ class PostService
 Метод **PostService::create** не доверяет такие важные проверки вызывающему коду и валидирует всё сам.
 В качестве бонуса, приложение теперь имеет намного более понятные тексты ошибок.
 
+## Два уровня валидации
+
 
 ![](images/two_level_validation.png)
 
 
-## Два уровня валидации
-
 В прошлом примере валидация была разделена на две части и я сказал, что метод **PostService::create** не доверяет сложную валидацию вызывающему коду, но он всё ещё доверяет ему в простом:
 
 ```php
-$post->title = $request->getTitle();
+$post->title = $dto->getTitle();
 ```
 Здесь мы исходим из того, что заголовок у нас будет непустой, однако на 100 процентов уверенности нет.
 Да, сейчас оно проверяется правилом 'required' при валидации, но это далеко, где-то в контроллерах или ещё дальше. 
@@ -123,7 +123,7 @@ $post->title = $request->getTitle();
 Давайте рассмотрим пример с регистрацией пользователя (он удобнее):
 
 ```php
-class RegisterUserDto
+readonly final class RegisterUserDto
 {
     public function __construct(
         public string $name,
@@ -193,41 +193,21 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class RegisterUserDto
 {
-    /** 
-     * @Assert\NotBlank()
-     * @var string 
-     */
-    private $name;
+    #[Assert\NotBlank]
+    private string $name;
     
-    /**
-     * @Assert\NotBlank()
-     * @Assert\Email()
-     * @var string 
-     */
-    private $email;
+    #[Assert\NotBlank]
+    #[Assert\Email]
+    private string $email;
     
-    /**
-     * @Assert\NotNull() 
-     * @var DateTime 
-     */
-    private $birthDate;
+    #[Assert\NotNull]
+    private DateTime $birthDate;
     
     // Конструктор и геттеры остаются такими же
 }
 ```
-Небольшая инициализация в контейнере:
 
-```php
-$container->bind(
-    \Symfony\Component\Validator\Validator\ValidatorInterface::class, 
-    function() {
-        return \Symfony\Component\Validator\Validation
-            ::createValidatorBuilder()
-                ->enableAnnotationMapping()
-                ->getValidator();
-});
-``` 
-И можно использовать валидатор в сервисном классе:
+Просим валидатор в сервисном классе и используем его для проверки DTO:
 
 ```php
 class UserService
@@ -263,7 +243,8 @@ class UserService
     }
 }
 ```
-Правила валидации описываются в специальных phpDoc-комментариях, которые называются аннотациями.
+Правила валидации описываются аннотациями. 
+В предыдущих версиях PHP их можно было описывать в специальных phpDoc-комментариях, которые имитировали аннотации.
 Метод **ValidatorInterface::validate** возвращает список нарушений правил валидации.
 Если он пуст - всё хорошо. Если нет, выбрасываем исключение валидации - **ValidationException**.
 Используя эту явную валидацию, в Слое Приложения можно быть уверенным в валидности данных.
@@ -286,15 +267,15 @@ class UserService
 Огромный DTO с кучей полей, дублирующих друг-друга, зависящих друг от друга.
 Номер дома не имеет никакого смысла без имени улицы.
 Имя улицы, без города и страны.
-И представьте, какой будет хаос, когда наше такси станет интер-галактическим!
+Валидация подобных данных будет сложной и регулярно дублируемой в разных DTO-объектах.
 
 ## Value objects
 Решение этой проблемы лежит прямо в **RegisterUserDto**.
 Мы не храним отдельно **$birthDay**, **$birthMonth** и **$birthYear**. Не валидируем их каждый раз.
 Мы просто храним объект **DateTime**! Он всегда хранит корректную дату и время.
 Сравнивая даты, мы никогда не сравниваем их года, месяцы и дни. Там есть метод **diff()** для сравнений дат.
-Этот класс содержит все знания о датах внутри себя.
-Давайте попробуем сделать что-то похожее:
+Этот класс содержит все знания о датах внутри себя, избавляя нас от необходимости дублировать логику работы с ними везде.
+Можно попробовать сделать что-то похожее и с другими данными:
 
 ```php
 final class Email
@@ -312,7 +293,8 @@ final class Email
         $this->email = $email;
     }
     
-    public static function create(string $email)
+    public static function createFromString(
+        string $email)
     {
         return new static($email);
     }
@@ -339,7 +321,8 @@ final class UserName
         $this->name = $name;
     }
     
-    public static function create(string $name)
+    public static function createFromString(
+        string $name)
     {
         return new static($name);
     }
@@ -350,25 +333,20 @@ final class UserName
     }
 }
 
-final class RegisterUserDto
+readonly final class RegisterUserDto
 {
-    // Поля и конструктор
-    
-    public function getName(): UserName
-    {...}
-    
-    public function getEmail(): Email
-    {...}
-        
-    public function getBirthDate(): DateTime
-    {...}
+    public function __construct(
+        public UserName $name,
+        public Email $email,
+        public DateTime $birthDate,
+    ) {}
 }
 ```
 Да, создавать класс для каждого возможного типа вводимых данных - это не то, о чем мечтает каждый программист.
 Но это естественный путь декомпозиции приложения.
 Вместо того, чтобы использовать строки и всегда сомневаться, лежит ли в них нужное значение, эти классы позволяют всегда иметь корректные значения, как с DateTime.
 Этот шаблон называется **Объект-значение**(**Value Object** или **VO**).
-Метод **getEmail()** больше не возвращает какую-то строку, он возвращает **Email**, который без сомнения можно использовать везде, где нужны email-адреса.
+В поле **email** больше не лежит просто строка. Поле это теперь типа **Email**, который без сомнения можно использовать везде, где нужны email-адреса.
 **UserService** может без страха использовать эти значения:
 
 ```php
@@ -378,50 +356,32 @@ final class UserService
     {
         //...
         $user = new User();
-        $user->name = $dto->getName()->value();
-        $user->email = $dto->getEmail()->value();
-        $user->birthDate = $dto->getBirthDate();
+        $user->name = $dto->name;
+        $user->email = $dto->email;
+        $user->birthDate = $dto->bithDate;
         
         $user->saveOrFail();
     }
 }
 ```
-Да, вызовы **->value()** выглядят не очень.
-Это можно решить, перекрыв метод **__toString()** в классах **Email** и **UserName**, но я не уверен, что это сработает со значениями в Eloquent.
-Даже если и сработает - это будет неявной магией. 
-Я лишнюю магию не люблю, позднее в книге мы найдем решение этой проблемы.
+Для того чтобы полям Eloquent-сущности можно было присваивать такие VO как **Email**, необходимо реализовать их преобразование через механизм casting.
+Это влечет за собой дополнительные затраты и необходимо еще раз задуматься "а стоит ли данный проект таких затрат?".
+Для многих проектов страхи, описанные выше, не так значительны и вполне можно обойтись без такого значительного усложнения логики.
+Однако, есть проекты, в которых цена ошибки будет слишком велика и такие усилия по защите целостности данных будут вполне оправданы.
 
 ## Объект-значение как композиция других значений
-Объекты-значения **Email** и **UserName** - это просто оболочки для строк.
-Шаблон **Объект-значение** - более широкое понятие.
+Объекты-значения **Email** и **UserName** - это просто оболочки для строк, но шаблон **Объект-значение** - более широкое понятие.
 Географическая координата может быть описана двумя float значениями: долгота и широта.
 Обычно, мало кому интересна долгота, без знания широты.
 Создав объект **GeoPoint**, можно во всем приложении работать с ним.
 
 ```php
-final class GeoPoint
+readonly final class GeoPoint
 {
-    /** @var float */
-    private $latitude;
-
-    /** @var float */
-    private $longitude;
-
-    public function __construct(float $latitude, float $longitude)
-    {
-        $this->latitude = $latitude;
-        $this->longitude = $longitude;
-    }
-
-    public function getLatitude(): float
-    {
-        return $this->latitude;
-    }
-
-    public function getLongitude(): float
-    {
-        return $this->longitude;
-    }
+    public function __construct(
+        public float $latitude, 
+        public float $longitude,
+    ) {}
     
     public function isEqual(GeoPoint $other): bool
     {
@@ -438,24 +398,13 @@ final class GeoPoint
 final class City
 {
     //...
-    public function setCenterPoint(GeoPoint $centerPoint)
-    {
-        $this->centerLatitude = $centerPoint->getLatitude();
-        $this->centerLongitude = $centerPoint->getLongitude();
-    }
-    
-    public function getCenterPoint(): GeoPoint
-    {
-        return new GeoPoint(
-            $this->centerLatitude, $this->centerLongitude);
-    }
+    private GeoPoint $centerPoint;
 
     public function getDistance(City $other): Distance
     {
-        return $this->getCenterPoint()
-                    ->getDistance($other->getCenterPoint());
+        return $this->centerPoint
+                    ->getDistance($other->centerPoint);
     }
-
 }
 ```
 Примером того, как знание о координатах инкапсулировано в классе **GeoPoint**, является метод **getDistance** класса **City**.
@@ -480,20 +429,6 @@ final class City
 ## Объекты-значения не для валидации
 
 ```php
-final class RegisterUserDto
-{
-    // fields and constructor
-    
-    public function getUserName(): UserName
-    {...}
-    
-    public function getEmail(): Email
-    {...}
-        
-    public function getBirthDate(): DateTime
-    {...}
-}
-
 final class UserController extends Controller
 {
     public function register(
@@ -532,16 +467,13 @@ final class Email
         $this->email = $email;
     }
     
-    public static function create(string $email)
-    {
-        return new static($email);
-    }
+    //...
 }
 ```
 
 Идея удаления кода Laravel-валидации выглядит интересной.
 Можно удалить вызов **$this->validate()** и просто ловить исключение **InvalidArgumentException** в глобальном обработчике ошибок.
-Но, как я уже говорил, данные HTTP-запроса не всегда равны данным, передаваемым в Слой Приложения, да и исключение **InvalidArgumentException** может быть выброшено во многих других ситуациях.
+Но, как я уже писал, данные HTTP-запроса не всегда равны данным, передаваемым в Слой Приложения, да и исключение **InvalidArgumentException** может быть выброшено во многих других ситуациях.
 Опять может повториться ситуация, когда пользователь видит ошибки про данные, которые он не вводил.
 
 Если вы помните, PhpStorm по умолчанию имеет 3 класса непроверяемых исключений: **Error**, **RuntimeException** и **LogicException**:
@@ -551,8 +483,7 @@ final class Email
 * **InvalidArgumentException** наследует от **LogicException**.
 Описание **LogicException** в документации PHP: "Исключение означает ошибку в логике приложения. Эти ошибки должны напрямую вести к исправлению кода.".
 Поэтому, если код написан верно, он никогда не должен выбрасывать **LogicException**.
-Это означает, что проверки в конструкторах объектов-значений нужны только для того, чтобы убедиться, что данные были проверены ранее.
-Это валидация кода приложения, не валидация пользовательского ввода.
+Это означает, что проверки в конструкторах объектов-значений нужны только для того, чтобы убедиться, что данные были проверены ранее, например с помощью вызова метода ->validate() и стандартного валидатора Laravel.
 
 ## Пара слов в конце главы
 
@@ -563,7 +494,7 @@ final class Email
 
 Валидация может быть оставлена в Web, API и других частях кода, а Слой Приложения будет просто доверять переданным ему данным.
 По моему опыту это работает только в маленьких проектах.
-Большие проекты, над которыми работают команды разработчиков, постоянно будут сталкиваться с проблемами невалидных данных, которые будут вести к неправильным значениям в базе данных или просто к неправильным исключениям.
+Большие проекты, над которыми работают команды разработчиков, постоянно будут сталкиваться с проблемами невалидных данных, которые будут вести к неправильным значениям в базе данных или к выбросу неверных исключений.
  
 Шаблон объект-значение требует некоторого дополнительного кодинга и "мышления объектами" от программистов, но это наиболее безопасный и естественный способ представлять данные, имеющие какой-то дополнительный смысл, т.е. "не просто строка, а email".
 Как всегда, это выбор между краткосрочной и долгосрочной производительностью.
