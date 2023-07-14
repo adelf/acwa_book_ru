@@ -6,8 +6,8 @@
 ```php
 public function store(
     Request $request, 
-    ImageUploader $imageUploader) 
-{
+    ImageUploader $imageUploader
+) {
     $this->validate($request, [
         'email' => 'required|email',
         'name' => 'required',
@@ -17,7 +17,8 @@ public function store(
     
     $avatarFileName = ...;    
     $imageUploader->upload(
-        $avatarFileName, $request->file('avatar'));
+        $avatarFileName, $request->file('avatar')
+    );
         
     $user = new User();
     $user->email = $request['email'];
@@ -26,7 +27,7 @@ public function store(
     $user->subscribed = $request->has('subscribed');
     $user->birthDate = new DateTime($request['birthDate']);
     
-    if(!$user->save()) {
+    if (!$user->save()) {
         return redirect()->back()->withMessage('...');
     }
     
@@ -57,7 +58,7 @@ final class UserService
 Методы контроллеров начинают расти и обычно содержат две большие части:
 
 ```php
-public function doSomething(Request $request, $id)
+public function doSomething(Request $request, int $id)
 {
     $entity = Entity::find($id);
     
@@ -106,8 +107,8 @@ final class UserService
     private EmailSender $emailSender;
     
     public function __construct(
-        ImageUploader $imageUploader, EmailSender $emailSender) 
-    {
+        ImageUploader $imageUploader, EmailSender $emailSender
+    ) {
         $this->imageUploader = $imageUploader;
         $this->emailSender = $emailSender;
     }
@@ -116,7 +117,8 @@ final class UserService
     {
         $avatarFileName = ...;
         $this->imageUploader->upload(
-            $avatarFileName, $request['avatar']);
+            $avatarFileName, $request['avatar']
+        );
 
         $user = new User();
         $user->email = $request['email'];
@@ -186,8 +188,8 @@ final class UserCreateDto
     private bool $subscribed;
     
     public function __construct(
-        string $email, DateTime $birthDate, bool $subscribed) 
-    {
+        string $email, DateTime $birthDate, bool $subscribed
+    ) {
         $this->email = $email;
         $this->birthDate = $birthDate;
         $this->subscribed = $subscribed;
@@ -241,7 +243,8 @@ final class UserService
     {
         $avatarFileName = ...;
         $this->imageUploader->upload(
-            $avatarFileName, $request->avatarFile);
+            $avatarFileName, $request->avatarFile
+        );
 
         $user = new User();
         $user->email = $request->email;
@@ -271,7 +274,8 @@ public function store(Request $request, UserService $userService)
     $dto = new UserCreateDto(
         $request['email'], 
         new DateTime($request['birthDate']), 
-        $request->has('subscribed'));
+        $request->has('subscribed')
+    );
     
     if (!$userService->create($dto)) {
         return redirect()->back()->withMessage('...');
@@ -309,15 +313,16 @@ final class UserCreateRequest extends FormRequest
         return new UserCreateDto(
             $this->get('email'), 
             new DateTime($this->get('birthDate')), 
-            $this->has('subscribed'));
+            $this->has('subscribed')
+        );
     }
 }
 
 final class UserController extends Controller
 {
     public function store(
-        UserCreateRequest $request, UserService $userService) 
-    {        
+        UserCreateRequest $request, UserService $userService
+    ) {        
         if (!$userService->create($request->getDto())) {
             return redirect()->back()->withMessage('...');
         }
@@ -342,7 +347,7 @@ final class UserController extends Controller
 ```php
 class PostController
 {
-    public function publish($id, PostService $postService)
+    public function publish(int $id, PostService $postService)
     {
         $post = Post::find($id);
         
@@ -397,7 +402,7 @@ public function handle(PostService $postService)
 ```php
 class PostController
 {
-    public function publish($id, PostService $postService)
+    public function publish(int $id, PostService $postService)
     {
         $post = $postService->getById($id);
         
@@ -420,7 +425,7 @@ class PostController
 ```php
 class PostController
 {
-    public function publish($id, PostService $postService)
+    public function publish(int $id, PostService $postService)
     {
         if (!$postService->publish($id)) {
             return redirect()->back()->withMessage('...');
@@ -485,7 +490,7 @@ final class PostService
 ```php
 final class PublishPostCommand
 {
-    public function execute($id)
+    public function execute(int $id)
     {
         //...
     }
@@ -502,8 +507,8 @@ final class ChangeUserPasswordCommand
 final class ChangeUserPasswordCommandHandler
 {
     public function handle(
-        ChangeUserPasswordCommand $command)
-    {
+        ChangeUserPasswordCommand $command
+    ) {
         //...
     }
 }
@@ -513,8 +518,8 @@ final class ChangeUserPasswordCommandHandler
 final class UserCommandHandler
 {
     public function handleChangePassword(
-        ChangeUserPasswordCommand $command)
-    {
+        ChangeUserPasswordCommand $command
+    ) {
         //...
     }
 }
