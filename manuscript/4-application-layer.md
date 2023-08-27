@@ -5,8 +5,8 @@
 
 ```php
 public function store(
-    Request $request, 
-    ImageUploader $imageUploader) 
+    Request $request,
+    ImageUploader $imageUploader)
 {
     $this->validate($request, [
         'email' => 'required|email',
@@ -14,30 +14,30 @@ public function store(
         'avatar' => 'required|image',
         'birthDate' => 'required|date',
     ]);
-    
-    $avatarFileName = ...;    
+
+    $avatarFileName = ...;
     $imageUploader->upload(
         $avatarFileName, $request->file('avatar'));
-        
+
     $user = new User();
     $user->email = $request['email'];
     $user->name = $request['name'];
     $user->avatarUrl = $avatarFileName;
     $user->subscribed = $request->has('subscribed');
     $user->birthDate = new DateTime($request['birthDate']);
-    
+
     if(!$user->save()) {
         return redirect()->back()->withMessage('...');
     }
-    
+
     \Email::send($user->email, 'Hi email');
-        
+
     return redirect()->route('users');
 }
 ```
 Потом у приложения появляется API для мобильного приложения и регистрация пользователей должна быть реализована и там.
 Давайте ещё нафантазируем некую консольную artisan-команду, которая импортирует пользователей и она тоже хочет их регистрировать.
-И telegram-бот! 
+И telegram-бот!
 В итоге у приложения появилось несколько интерфейсов, кроме стандартного HTML и везде необходимо использовать такие действия, как регистрация пользователя или публикация статьи.
 Самое естественное решение здесь выделить общую логику работы с сущностью (User в данном примере) в отдельный класс.
 Такие классы часто называют сервисными классами:
@@ -60,29 +60,29 @@ final class UserService
 public function doSomething(Request $request, $id)
 {
     $entity = Entity::find($id);
-    
+
     if (!$entity) {
         abort(404);
     }
-    
+
     if (count($request['options']) < 2) {
         return redirect()->back()->withMessage('...');
     }
-    
+
     if ($entity->something) {
         return redirect()->back()->withMessage('...');
     }
-    
+
     \Db::transaction(function () use ($request, $entity) {
         $entity->someProperty = $request['someProperty'];
-        
+
         foreach($request['options'] as $option) {
             //...
         }
-        
+
         $entity->save();
     });
-    
+
     return redirect()->...
 }
 ```
@@ -102,16 +102,16 @@ public function doSomething(Request $request, $id)
 final class UserService
 {
     private ImageUploader $imageUploader;
-    
+
     private EmailSender $emailSender;
-    
+
     public function __construct(
-        ImageUploader $imageUploader, EmailSender $emailSender) 
+        ImageUploader $imageUploader, EmailSender $emailSender)
     {
         $this->imageUploader = $imageUploader;
         $this->emailSender = $emailSender;
     }
-    
+
     public function create(array $request)
     {
         $avatarFileName = ...;
@@ -124,19 +124,19 @@ final class UserService
         $user->avatarUrl = $avatarFileName;
         $user->subscribed = isset($request['subscribed']);
         $user->birthDate = new DateTime($request['birthDate']);
-        
+
         if (!$user->save()) {
             return false;
         }
-        
+
         $this->emailSender->send($user->email, 'Hi email');
-        
+
         return true;
     }
 }
 
 // Controller
-public function store(Request $request, UserService $userService) 
+public function store(Request $request, UserService $userService)
 {
     $this->validate($request, [
         'email' => 'required|email',
@@ -144,11 +144,11 @@ public function store(Request $request, UserService $userService)
         'avatar' => 'required|image',
         'birthDate' => 'required|date',
     ]);
-    
+
     if (!$userService->create($request->all())) {
         return redirect()->back()->withMessage('...');
     }
-    
+
     return redirect()->route('users');
 }
 ```
@@ -180,29 +180,29 @@ $userService->create($data);
 final class UserCreateDto
 {
     private string $email;
-    
+
     private DateTime $birthDate;
-    
+
     private bool $subscribed;
-    
+
     public function __construct(
-        string $email, DateTime $birthDate, bool $subscribed) 
+        string $email, DateTime $birthDate, bool $subscribed)
     {
         $this->email = $email;
         $this->birthDate = $birthDate;
         $this->subscribed = $subscribed;
     }
-    
+
     public function getEmail(): string
     {
         return $this->email;
     }
-        
-    public function getBirthDate(): DateTime 
+
+    public function getBirthDate(): DateTime
     {
         return $this->birthDate;
     }
-    
+
     public function isSubscribed(): bool
     {
         return $this->subscribed;
@@ -221,7 +221,7 @@ final class UserCreateDto
 
 ```php
 readonly final class UserCreateDto
-{   
+{
     public function __construct(
         public string $email;
         public DateTime $birthDate;
@@ -230,13 +230,13 @@ readonly final class UserCreateDto
 }
 ```
 
-Комбинация из private поля и геттер-метода использовалась, чтобы обеспечить неизменяемость данных внутри DTO-объекта. Модификатор readonly обеспечивает неизменяемость объекта, поэтому мы вполне можем сделать поля public. 
+Комбинация из private поля и геттер-метода использовалась, чтобы обеспечить неизменяемость данных внутри DTO-объекта. Модификатор readonly обеспечивает неизменяемость объекта, поэтому мы вполне можем сделать поля public.
 
 ```php
 final class UserService
 {
     //...
-    
+
     public function create(UserCreateDto $request)
     {
         $avatarFileName = ...;
@@ -248,18 +248,18 @@ final class UserService
         $user->avatarUrl = $avatarFileName;
         $user->subscribed = $request->subscribed;
         $user->birthDate = $request->birthDate;
-        
+
         if (!$user->save()) {
             return false;
         }
-        
+
         $this->emailSender->send($user->email, 'Hi email');
-        
+
         return true;
     }
 }
 
-public function store(Request $request, UserService $userService) 
+public function store(Request $request, UserService $userService)
 {
     $this->validate($request, [
         'email' => 'required|email',
@@ -267,16 +267,16 @@ public function store(Request $request, UserService $userService)
         'avatar' => 'required|image',
         'birthDate' => 'required|date',
     ]);
-    
+
     $dto = new UserCreateDto(
-        $request['email'], 
-        new DateTime($request['birthDate']), 
+        $request['email'],
+        new DateTime($request['birthDate']),
         $request->has('subscribed'));
-    
+
     if (!$userService->create($dto)) {
         return redirect()->back()->withMessage('...');
     }
-    
+
     return redirect()->route('users');
 }
 ```
@@ -298,17 +298,17 @@ final class UserCreateRequest extends FormRequest
             'birthDate' => 'required|date',
         ];
     }
-    
+
     public function authorize()
     {
         return true;
     }
-    
+
     public function getDto(): UserCreateDto
     {
         return new UserCreateDto(
-            $this->get('email'), 
-            new DateTime($this->get('birthDate')), 
+            $this->get('email'),
+            new DateTime($this->get('birthDate')),
             $this->has('subscribed'));
     }
 }
@@ -316,18 +316,18 @@ final class UserCreateRequest extends FormRequest
 final class UserController extends Controller
 {
     public function store(
-        UserCreateRequest $request, UserService $userService) 
-    {        
+        UserCreateRequest $request, UserService $userService)
+    {
         if (!$userService->create($request->getDto())) {
             return redirect()->back()->withMessage('...');
         }
-        
+
         return redirect()->route('users');
     }
 }
 ```
-Если какой-либо класс просит класс, наследованный от **FormRequest**, как зависимость, Laravel создаёт его и выполняет валидацию автоматически. 
-В случае неверных данных метод **store** не будет выполняться, поэтому можно всегда быть уверенными в валидности данных в **UserCreateRequest**. 
+Если какой-либо класс просит класс, наследованный от **FormRequest**, как зависимость, Laravel создаёт его и выполняет валидацию автоматически.
+В случае неверных данных метод **store** не будет выполняться, поэтому можно всегда быть уверенными в валидности данных в **UserCreateRequest**.
 
 Классы **Form request** содержат методы **rules** для валидации данных и **authorize** для авторизации действия.
 **Form request** явно не лучшее место для реализации авторизации.
@@ -345,15 +345,15 @@ class PostController
     public function publish($id, PostService $postService)
     {
         $post = Post::find($id);
-        
+
         if (!$post) {
             abort(404);
         }
-        
+
         if (!$postService->publish($post)) {
             return redirect()->back()->withMessage('...');
         }
-        
+
         return redirect()->route('posts');
     }
 }
@@ -375,12 +375,12 @@ final class PostService
 public function handle(PostService $postService)
 {
     $post = Post::find(...);
-    
+
     if (!$post) {
         $this->error(...);
         return;
     }
-    
+
     if (!$postService->publish($post)) {
         $this->error(...);
     } else {
@@ -400,15 +400,15 @@ class PostController
     public function publish($id, PostService $postService)
     {
         $post = $postService->getById($id);
-        
+
         if (!$post) {
             abort(404);
         }
-        
+
         if (!$postService->publish($post)) {
             return redirect()->back()->withMessage('...');
         }
-        
+
         return redirect()->route('posts');
     }
 }
@@ -425,7 +425,7 @@ class PostController
         if (!$postService->publish($id)) {
             return redirect()->back()->withMessage('...');
         }
-        
+
         return redirect()->route('posts');
     }
 }
@@ -435,13 +435,13 @@ final class PostService
     public function publish(int $id)
     {
         $post = Post::find($id);
-            
+
         if (!$post) {
             return false;
         }
-        
+
         $post->published = true;
-        
+
         return $post->save();
     }
 }
@@ -450,7 +450,7 @@ final class PostService
 Часть для работы с Web должна просто готовить данные для сервис-классов и показывать результаты пользователю.
 То же самое про другие интерфейсы.
 Это Принцип единственной ответственности для слоёв.
-Слоёв? Да. 
+Слоёв? Да.
 
 Слоем называют группу классов, объединенных схожей ответственностью и схожими зависимостями.
 Например, слой веб-контроллеров - классы, которые принимают веб-запрос, передают его в сервисные классы, получают от них ответ и отдают результат в нужной форме.
