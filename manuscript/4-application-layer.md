@@ -5,8 +5,8 @@
 
 ```php
 public function store(
-    Request $request, 
-    ImageUploader $imageUploader) 
+    Request $request,
+    ImageUploader $imageUploader)
 {
     $this->validate($request, [
         'email' => 'required|email',
@@ -14,32 +14,32 @@ public function store(
         'avatar' => 'required|image',
         'birthDate' => 'required|date',
     ]);
-    
-    $avatarFileName = ...;    
+
+    $avatarFileName = ...;
     $imageUploader->upload(
         $avatarFileName, $request->file('avatar'));
-        
+
     $user = new User();
     $user->email = $request['email'];
     $user->name = $request['name'];
     $user->avatarUrl = $avatarFileName;
     $user->subscribed = $request->has('subscribed');
     $user->birthDate = new DateTime($request['birthDate']);
-    
+
     if(!$user->save()) {
         return redirect()->back()->withMessage('...');
     }
-    
+
     \Email::send($user->email, 'Hi email');
-        
+
     return redirect()->route('users');
 }
 ```
 Потом у приложения появляется API для мобильного приложения и регистрация пользователей должна быть реализована и там.
-Давайте ещё нафантазируем некую консольную artisan-команду, которая импортирует пользователей и она тоже хочет их регистрировать.
-И telegram-бот! 
-В итоге у приложения появилось несколько интерфейсов, кроме стандартного HTML и везде необходимо использовать такие действия, как регистрация пользователя или публикация статьи.
-Самое естественное решение здесь выделить общую логику работы с сущностью (User в данном примере) в отдельный класс.
+Давайте ещё нафантазируем некую консольную artisan-команду, которая импортирует пользователей, и она тоже хочет их регистрировать.
+И telegram-бот!
+В итоге у приложения появилось несколько интерфейсов, кроме стандартного HTML, и везде необходимо использовать такие действия, как регистрация пользователя или публикация статьи.
+Самое естественное решение здесь - выделить общую логику работы с сущностью (User в данном примере) в отдельный класс.
 Такие классы часто называют сервисными классами:
 
 ```php
@@ -60,34 +60,34 @@ final class UserService
 public function doSomething(Request $request, $id)
 {
     $entity = Entity::find($id);
-    
+
     if (!$entity) {
         abort(404);
     }
-    
+
     if (count($request['options']) < 2) {
         return redirect()->back()->withMessage('...');
     }
-    
+
     if ($entity->something) {
         return redirect()->back()->withMessage('...');
     }
-    
+
     \Db::transaction(function () use ($request, $entity) {
         $entity->someProperty = $request['someProperty'];
-        
+
         foreach($request['options'] as $option) {
             //...
         }
-        
+
         $entity->save();
     });
-    
+
     return redirect()->...
 }
 ```
 Этот метод реализует как минимум две ответственности: логику работы с HTTP запросом/ответом и бизнес-логику.
-Каждый раз когда разработчик меняет http-логику, он вынужден читать много кода бизнес-логики и наоборот.
+Каждый раз, когда разработчик меняет http-логику, он вынужден читать много кода бизнес-логики и наоборот.
 Такой код сложнее дебажить и рефакторить, поэтому вынесение логики в сервис-классы тоже может быть хорошей идеей для этого проекта.
 
 ## Передача данных запроса
@@ -96,22 +96,22 @@ public function doSomething(Request $request, $id)
 Первой проблемой будет передача данных запроса туда.
 Некоторым методам не нужно много данных и, например, для удаления статьи нужен только её id.
 Однако, для таких действий, как регистрация пользователя, данных может понадобиться много.
-Мы не можем использовать класс **Request**, поскольку он доступен только для web и недоступен, например для консоли. Попробуем простые массивы:
+Мы не можем использовать класс **Request**, поскольку он доступен только для web и недоступен, например, для консоли. Попробуем простые массивы:
 
 ```php
 final class UserService
 {
     private ImageUploader $imageUploader;
-    
+
     private EmailSender $emailSender;
-    
+
     public function __construct(
-        ImageUploader $imageUploader, EmailSender $emailSender) 
+        ImageUploader $imageUploader, EmailSender $emailSender)
     {
         $this->imageUploader = $imageUploader;
         $this->emailSender = $emailSender;
     }
-    
+
     public function create(array $request)
     {
         $avatarFileName = ...;
@@ -124,19 +124,19 @@ final class UserService
         $user->avatarUrl = $avatarFileName;
         $user->subscribed = isset($request['subscribed']);
         $user->birthDate = new DateTime($request['birthDate']);
-        
+
         if (!$user->save()) {
             return false;
         }
-        
+
         $this->emailSender->send($user->email, 'Hi email');
-        
+
         return true;
     }
 }
 
 // Controller
-public function store(Request $request, UserService $userService) 
+public function store(Request $request, UserService $userService)
 {
     $this->validate($request, [
         'email' => 'required|email',
@@ -144,11 +144,11 @@ public function store(Request $request, UserService $userService)
         'avatar' => 'required|image',
         'birthDate' => 'required|date',
     ]);
-    
+
     if (!$userService->create($request->all())) {
         return redirect()->back()->withMessage('...');
     }
-    
+
     return redirect()->route('users');
 }
 ```
@@ -174,35 +174,35 @@ $userService->create($data);
 Булевы значения проверяются присутствием нужного ключа в массиве. Значения даты получаются преобразованием из строк.
 Использование такого формата данных весьма неудобно, если эти данные пришли не из HTML-формы.
 Нам нужен новый формат данных, более естественный, более удобный.
-Шаблон **Data Transfer Object**(DTO) предлагает просто создавать объекты с нужными полями:
+Шаблон **Data Transfer Object** (DTO) предлагает просто создавать объекты с нужными полями:
 
 ```php
 final class UserCreateDto
 {
     private string $email;
-    
+
     private DateTime $birthDate;
-    
+
     private bool $subscribed;
-    
+
     public function __construct(
-        string $email, DateTime $birthDate, bool $subscribed) 
+        string $email, DateTime $birthDate, bool $subscribed)
     {
         $this->email = $email;
         $this->birthDate = $birthDate;
         $this->subscribed = $subscribed;
     }
-    
+
     public function getEmail(): string
     {
         return $this->email;
     }
-        
-    public function getBirthDate(): DateTime 
+
+    public function getBirthDate(): DateTime
     {
         return $this->birthDate;
     }
-    
+
     public function isSubscribed(): bool
     {
         return $this->subscribed;
@@ -211,7 +211,7 @@ final class UserCreateDto
 ```
 
 Частенько я слышу возражения вроде «Я не хочу создавать целый класс только для того, чтобы передать данные. Массивы справляются не хуже.»
-Это верно отчасти и для какого-то уровня сложности приложений создавать классы DTO, вероятно, не стоит.
+Это верно отчасти, и для какого-то уровня сложности приложений создавать классы DTO, вероятно, не стоит.
 Дальше в книге я приведу пару аргументов в пользу DTO. Здесь же лишь напишу, что в современных IDE создать такой класс — это написать его имя в диалоге создания класса,
 горячая клавиша создания конструктора (Alt-Ins > Constructor...), перечислить поля с типами в аргументах конструктора,
 горячая клавиша по которой PhpStorm создаст все нужные поля класса (Alt-Enter на параметрах конструктора > Initialize fields)
@@ -221,7 +221,7 @@ final class UserCreateDto
 
 ```php
 readonly final class UserCreateDto
-{   
+{
     public function __construct(
         public string $email;
         public DateTime $birthDate;
@@ -230,13 +230,13 @@ readonly final class UserCreateDto
 }
 ```
 
-Комбинация из private поля и геттер-метода использовалась, чтобы обеспечить неизменяемость данных внутри DTO-объекта. Модификатор readonly обеспечивает неизменяемость объекта, поэтому мы вполне можем сделать поля public. 
+Комбинация из private поля и геттер-метода использовалась, чтобы обеспечить неизменяемость данных внутри DTO-объекта. Модификатор readonly обеспечивает неизменяемость объекта, поэтому мы вполне можем сделать поля public.
 
 ```php
 final class UserService
 {
     //...
-    
+
     public function create(UserCreateDto $request)
     {
         $avatarFileName = ...;
@@ -248,18 +248,18 @@ final class UserService
         $user->avatarUrl = $avatarFileName;
         $user->subscribed = $request->subscribed;
         $user->birthDate = $request->birthDate;
-        
+
         if (!$user->save()) {
             return false;
         }
-        
+
         $this->emailSender->send($user->email, 'Hi email');
-        
+
         return true;
     }
 }
 
-public function store(Request $request, UserService $userService) 
+public function store(Request $request, UserService $userService)
 {
     $this->validate($request, [
         'email' => 'required|email',
@@ -267,16 +267,16 @@ public function store(Request $request, UserService $userService)
         'avatar' => 'required|image',
         'birthDate' => 'required|date',
     ]);
-    
+
     $dto = new UserCreateDto(
-        $request['email'], 
-        new DateTime($request['birthDate']), 
+        $request['email'],
+        new DateTime($request['birthDate']),
         $request->has('subscribed'));
-    
+
     if (!$userService->create($dto)) {
         return redirect()->back()->withMessage('...');
     }
-    
+
     return redirect()->route('users');
 }
 ```
@@ -298,17 +298,17 @@ final class UserCreateRequest extends FormRequest
             'birthDate' => 'required|date',
         ];
     }
-    
+
     public function authorize()
     {
         return true;
     }
-    
+
     public function getDto(): UserCreateDto
     {
         return new UserCreateDto(
-            $this->get('email'), 
-            new DateTime($this->get('birthDate')), 
+            $this->get('email'),
+            new DateTime($this->get('birthDate')),
             $this->has('subscribed'));
     }
 }
@@ -316,23 +316,23 @@ final class UserCreateRequest extends FormRequest
 final class UserController extends Controller
 {
     public function store(
-        UserCreateRequest $request, UserService $userService) 
-    {        
+        UserCreateRequest $request, UserService $userService)
+    {
         if (!$userService->create($request->getDto())) {
             return redirect()->back()->withMessage('...');
         }
-        
+
         return redirect()->route('users');
     }
 }
 ```
-Если какой-либо класс просит класс, наследованный от **FormRequest**, как зависимость, Laravel создаёт его и выполняет валидацию автоматически. 
-В случае неверных данных метод **store** не будет выполняться, поэтому можно всегда быть уверенными в валидности данных в **UserCreateRequest**. 
+Если какой-либо класс просит класс, наследованный от **FormRequest**, как зависимость, Laravel создаёт его и выполняет валидацию автоматически.
+В случае неверных данных метод **store** не будет выполняться, поэтому можно всегда быть уверенными в валидности данных в **UserCreateRequest**.
 
 Классы **Form request** содержат методы **rules** для валидации данных и **authorize** для авторизации действия.
 **Form request** явно не лучшее место для реализации авторизации.
 Авторизация часто требует контекста, например какой юзер, с какой сущностью, какое действие.
-Это все можно делать в методе **authorize**, но в сервисном классе это делать намного проще, поскольку там уже будут все нужные данные да и не придется повторять то же самое для API и других интерфейсов.
+Это все можно делать в методе **authorize**, но в сервисном классе это делать намного проще, поскольку там уже будут все нужные данные, да и не придется повторять то же самое для API и других интерфейсов.
 В моих проектах всегда есть базовый **FormRequest** класс, в котором метод **authorize** с одним оператором `return true;`, который позволяет забыть про авторизацию на этом уровне.
 
 ## Работа с базой данных
@@ -345,15 +345,15 @@ class PostController
     public function publish($id, PostService $postService)
     {
         $post = Post::find($id);
-        
+
         if (!$post) {
             abort(404);
         }
-        
+
         if (!$postService->publish($post)) {
             return redirect()->back()->withMessage('...');
         }
-        
+
         return redirect()->route('posts');
     }
 }
@@ -368,19 +368,19 @@ final class PostService
     }
 }
 ```
-Публикация статьи — это пример простейшего не-CRUD действия и я буду использовать его часто.
+Публикация статьи — это пример простейшего не-CRUD действия, и я буду использовать его часто.
 В примере все выглядит неплохо, но если попробовать вызвать метод сервиса из консоли, то нужно будет опять доставать сущность **Post** из базы данных.
 
 ```php
 public function handle(PostService $postService)
 {
     $post = Post::find(...);
-    
+
     if (!$post) {
         $this->error(...);
         return;
     }
-    
+
     if (!$postService->publish($post)) {
         $this->error(...);
     } else {
@@ -400,15 +400,15 @@ class PostController
     public function publish($id, PostService $postService)
     {
         $post = $postService->getById($id);
-        
+
         if (!$post) {
             abort(404);
         }
-        
+
         if (!$postService->publish($post)) {
             return redirect()->back()->withMessage('...');
         }
-        
+
         return redirect()->route('posts');
     }
 }
@@ -425,7 +425,7 @@ class PostController
         if (!$postService->publish($id)) {
             return redirect()->back()->withMessage('...');
         }
-        
+
         return redirect()->route('posts');
     }
 }
@@ -435,13 +435,13 @@ final class PostService
     public function publish(int $id)
     {
         $post = Post::find($id);
-            
+
         if (!$post) {
             return false;
         }
-        
+
         $post->published = true;
-        
+
         return $post->save();
     }
 }
@@ -450,25 +450,25 @@ final class PostService
 Часть для работы с Web должна просто готовить данные для сервис-классов и показывать результаты пользователю.
 То же самое про другие интерфейсы.
 Это Принцип единственной ответственности для слоёв.
-Слоёв? Да. 
+Слоёв? Да.
 
 Слоем называют группу классов, объединенных схожей ответственностью и схожими зависимостями.
 Например, слой веб-контроллеров - классы, которые принимают веб-запрос, передают его в сервисные классы, получают от них ответ и отдают результат в нужной форме.
-Слоем они названы из-за того, что веб-запрос(или запрос из консоли) проходит сквозь эти слои(веб-контроллеров, сервисный классов, работы с базой данных) и возвращается через них же.
+Слоем они названы из-за того, что веб-запрос (или запрос из консоли) проходит сквозь эти слои (веб-контроллеров, сервисный классов, работы с базой данных) и возвращается через них же.
 
 Все сервис-классы, прячущие логику приложения внутри себя, формируют структуру, которая имеет множество имён:
-* **Сервисный слой** (Service layer), из-за **сервисных** классов.
-* **Слой приложения** (Application layer), потому что он содержит всю логику приложения, исключая интерфейсы к нему.
-* в GRASP этот слой называется **Слой контроллеров** (Controllers layer), поскольку сервисные классы там называются контроллерами.
+* **Сервисный слой** (Service layer), из-за **сервисных** классов;
+* **Слой приложения** (Application layer), потому что он содержит всю логику приложения, исключая интерфейсы к нему;
+* в GRASP этот слой называется **Слой контроллеров** (Controllers layer), поскольку сервисные классы там называются контроллерами;
 * наверняка есть и другие названия.
 
 В этой книге я буду называть его **Слоем приложения**. Потому что могу.
 
 То, что я описал здесь, очень похоже на архитектурный шаблон **Гексагональная архитектура**, или **Луковая архитектура**, или еще десятки подобных.
 Неудивительно, поскольку они решают ровно те же задачи.
-Однако, гораздо полезнее для развития разработчика самому осознать причины выделения кода в отдельные классы, почувствовать какие части кода могут работать с базой данных или данными веб-запроса.
-Самому увидеть как участки кода с похожими обязанностями и потребностями выстраиваются в некое подобие слоев.
-Получив подобный опыт и набив руку, можно ознакомиться с данными шаблонами и, возможно, принять один из них как стандарт на каком-либо проекте, полностью осознавая, что данный шаблон подходит проекту, не являясь микроскопом, коим забивают гвозди или пушкой, которой стреляют по воробьям.
+Однако, гораздо полезнее для развития разработчика самому осознать причины выделения кода в отдельные классы, почувствовать, какие части кода могут работать с базой данных или данными веб-запроса.
+Самому увидеть, как участки кода с похожими обязанностями и потребностями выстраиваются в некое подобие слоев.
+Получив подобный опыт и набив руку, можно ознакомиться с данными шаблонами и, возможно, принять один из них как стандарт на каком-либо проекте, полностью осознавая, что данный шаблон подходит проекту, не являясь микроскопом, коим забивают гвозди, или пушкой, которой стреляют по воробьям.
 
 ## Сервисные классы или классы команд?
 
@@ -491,7 +491,7 @@ final class PublishPostCommand
     }
 }
 ```
-В шаблоне **Command Bus** суффикс **Command** используется для DTO-классов, а классы исполняющие команды называются **CommandHandler**.
+В шаблоне **Command Bus** суффикс **Command** используется для DTO-классов, а классы, исполняющие команды, называются **CommandHandler**.
 
 ```php
 final class ChangeUserPasswordCommand
@@ -527,11 +527,11 @@ final class UserCommandHandler
 Полностью его написать придется всего один раз — при создании.
 Дальше IDE будет полностью подсказывать его.
 Хорошее, полностью описывающее класс, название намного важнее.
-Каждый разработчик может сразу сказать что примерно делает класс **ChangeUserPasswordCommandHandler** не заглядывая внутрь него.
+Каждый разработчик может сразу сказать что примерно делает класс **ChangeUserPasswordCommandHandler**, не заглядывая внутрь него.
 
 ## Пара слов в конце главы
 
-Выделение слоя приложения - весьма ответственный шаг и причина должна быть серьезной. Их всего две:
+Выделение слоя приложения - весьма ответственный шаг, и причина должна быть серьезной. Их всего две:
 
 1. Разные интерфейсы к одним и тем же действиям (Web, API, Console, различные боты). Тут вынесение общей логики просится само.
 2. Разросшиеся и сложные логики обработки веб-запроса, например, и бизнес-логики. В данном случае разделение логик по разным местам может заметно улучшить связность кода. Как правило, это ведет к повышенной багостойкости кода.
