@@ -29,9 +29,9 @@ class PostService
     public function create(CreatePostDto $dto)
     {
         $post = new Post();
-        $post->category_id = $dto->getCategoryId();
-        $post->title = $dto->getTitle();
-        $post->body = $dto->getBody();
+        $post->category_id = $dto->categoryId;
+        $post->title = $dto->title;
+        $post->body = $dto->body;
         
         $post->saveOrFail();
     }
@@ -69,7 +69,7 @@ $this->validate($request, [
 ![](images/application_layer.png)
 
 
-Надо разделить валидацию. В валидации HTTP слоя нам просто необходимо убедиться, что пользователь не ошибся во вводе данных:
+Надо разделить валидацию. В валидации HTTP слоя нам просто необходимо убедиться, что пользователь не ошибся при вводе данных:
 
 ```php
 $this->validate($request, [
@@ -82,7 +82,7 @@ class PostService
 {
     public function create(CreatePostDto $dto)
     {
-        $category = Category::find($dto->getCategoryId());
+        $category = Category::find($dto->categoryId);
         
         if($category === null) {
             // throw "Category not found" exception
@@ -94,8 +94,8 @@ class PostService
         
         $post = new Post();
         $post->category_id = $category->id;
-        $post->title = $dto->getTitle();
-        $post->body = $dto->getBody();
+        $post->title = $dto->title;
+        $post->body = $dto->body;
         
         $post->saveOrFail();
     }
@@ -115,7 +115,7 @@ class PostService
 В прошлом примере валидация была разделена на две части и я сказал, что метод **PostService::create** не доверяет сложную валидацию вызывающему коду, но он всё ещё доверяет ему в простом:
 
 ```php
-$post->title = $dto->getTitle();
+$post->title = $dto->title;
 ```
 Здесь мы исходим из того, что заголовок у нас будет непустой, однако на 100 процентов уверенности нет.
 Да, сейчас оно проверяется правилом 'required' при валидации, но это далеко, где-то в контроллерах или ещё дальше. 
@@ -184,26 +184,25 @@ class UserService
 
 ## Валидация аннотациями
 
-Проект **Symfony** содержит отличный компонент для валидации аннотациями - **symfony/validator**. 
-Для того, чтобы использовать его вне Symfony, нужно установить composer-пакеты **symfony/validator**, **doctrine/annotations** и **doctrine/cache** и сделать небольшую инициализацию. 
+Проект **Symfony** содержит отличный компонент для валидации аннотациями - **symfony/validator**.
 Перепишем наш **RegisterUserDto**:
 
 ```php
 use Symfony\Component\Validator\Constraints as Assert;
 
-class RegisterUserDto
+readonly class RegisterUserDto
 {
-    #[Assert\NotBlank]
-    private string $name;
-    
-    #[Assert\NotBlank]
-    #[Assert\Email]
-    private string $email;
-    
-    #[Assert\NotNull]
-    private DateTime $birthDate;
-    
-    // Конструктор и геттеры остаются такими же
+    public function __construct(
+        #[Assert\NotBlank]
+        private string $name;
+        
+        #[Assert\NotBlank]
+        #[Assert\Email]
+        private string $email;
+        
+        #[Assert\NotNull]
+        private DateTime $birthDate;
+    ) {}
 }
 ```
 
@@ -212,13 +211,9 @@ class RegisterUserDto
 ```php
 class UserService
 {
-    /** @var ValidatorInterface */
-    private $validator;
-    
-    public function __construct(ValidatorInterface $validator) 
-    {
-        $this->validator = $validator;
-    }
+    public function __construct(
+        private ValidatorInterface $validator
+    ) {}
     
     public function register(RegisterUserDto $dto)
     {
@@ -228,28 +223,28 @@ class UserService
             throw new ValidationException($violations);
         }
         
-        $existingUser = User::whereEmail($dto->getEmail())->first();
+        $existingUser = User::whereEmail($dto->email)->first();
         
         if($existingUser !== null) {
             throw new UserWithThisEmailAlreadyExists(...);    
         }
         
         $user = new User();
-        $user->name = $dto->getName();
-        $user->email = $dto->getEmail();
-        $user->birthDate = $dto->getBirthDate();
+        $user->name = $dto->name;
+        $user->email = $dto->email;
+        $user->birthDate = $dto->birthDate;
         
         $user->saveOrFail();
     }
 }
 ```
+
 Правила валидации описываются аннотациями. 
-В предыдущих версиях PHP их можно было описывать в специальных phpDoc-комментариях, которые имитировали аннотации.
 Метод **ValidatorInterface::validate** возвращает список нарушений правил валидации.
 Если он пуст - всё хорошо. Если нет, выбрасываем исключение валидации - **ValidationException**.
 Используя эту явную валидацию, в Слое Приложения можно быть уверенным в валидности данных.
 Также, в качестве бонуса, можно удалить валидацию в слое Web, API и т.д, поскольку все данные уже проверяются глубже.
-Выглядит неплохо, но с этим есть некоторые проблемы.
+Отличная идея, но с этим есть некоторые проблемы.
 
 ### Проблема данных Http запроса
 В первую очередь, данные, которые передаются от пользователей в HTTP-запросе, не всегда равны данным, передаваемым в Слой Приложения.
@@ -258,7 +253,7 @@ class UserService
 
 Другой пример: одно из значений, передаваемых в Слой Приложения заполняется email-адресом текущего пользователя.
 Если этот email окажется пустым, то пользователь может увидеть сообщение "Формат email неверный", при том, что он даже не вводил никакого email!
-Поэтому делать валидацию пользовательского ввода в Слое Приложения - не самая лучшая идея.
+Поэтому, делать валидацию пользовательского ввода в Слое Приложения - не самая лучшая идея.
 
 ### Проблема сложных структур данных
 Представьте некий DTO создания заказа такси - **CreateTaxiOrderDto**.
@@ -420,8 +415,7 @@ final class City
 Класс **Distance** может иметь методы **getMeters()**: float или **getMiles()**: float.
 А также **Distance::isEqual**(**Distance** **$other**) для сравнения двух расстояний.
 Это тоже объект-значение!
-Хорошо, иногда это чересчур.
-Для многих проектов **GeoPoint::getDistance()**: возвращающий число с плавающей запятой расстояния в метрах более, чем достаточно.
+Для многих проектов такая детализация излишня, и метод **GeoPoint::getDistance()**: возвращающий число с плавающей запятой расстояния в метрах более, чем достаточен.
 Я лишь хотел показать пример того, что я называю "мышлением объектами".
 Мы ещё вернемся к объектам-значениям позднее в этой книге.
 Вероятно, вы понимаете, что этот шаблон слишком мощныЙ, чтобы использоваться только как поле в DTO.
@@ -483,7 +477,10 @@ final class Email
 * **InvalidArgumentException** наследует от **LogicException**.
 Описание **LogicException** в документации PHP: "Исключение означает ошибку в логике приложения. Эти ошибки должны напрямую вести к исправлению кода.".
 Поэтому, если код написан верно, он никогда не должен выбрасывать **LogicException**.
+
 Это означает, что проверки в конструкторах объектов-значений нужны только для того, чтобы убедиться, что данные были проверены ранее, например с помощью вызова метода ->validate() и стандартного валидатора Laravel.
+Они не должны бюыть использованы в качестве валидации данных, введенных польхователем. 
+Это валидация кода нашего приложения.
 
 ## Пара слов в конце главы
 
