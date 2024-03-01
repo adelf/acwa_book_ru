@@ -162,13 +162,10 @@ use Illuminate\Contracts\Bus\Dispatcher;
 
 final class PollService
 {
-    /** @var Dispatcher */
-    private $dispatcher;
-    
-    public function __construct(..., Dispatcher $dispatcher) 
+    public function __construct(
+        ..., 
+        private Dispatcher $dispatcher) 
     {
-        ...
-        $this->dispatcher = $dispatcher;
     }
         
     public function create(PollCreateDto $request)
@@ -201,18 +198,9 @@ final class PollService
 ```php
 final class PollCreated
 {
-    /** @var int */
-    private $pollId;
-    
-    public function __construct(int $pollId)
-    {
-        $this->pollId = $pollId;
-    }
-    
-    public function getPollId(): int
-    {
-        return $this->pollId;
-    }
+    public function __construct(
+        public readonly int $pollId
+    ) {}
 }
 
 use Illuminate\Contracts\Events\Dispatcher;
@@ -348,18 +336,9 @@ public function create(PollCreateDto $request)
 ```php
 final class PollCreated
 {
-    /** @var Poll */
-    private $poll;
-    
-    public function __construct(Poll $poll)
-    {
-        $this->poll = $poll;
-    }
-    
-    public function getPoll(): Poll
-    {
-        return $this->poll;
-    }
+    public function __construct(
+        public readonly Poll $poll
+    ) {}
 }
 
 final class PollService
@@ -378,7 +357,7 @@ final class SendPollCreatedEmailListener implements ShouldQueue
     public function handle(PollCreated $event)
     {
         // ...
-        foreach($event->getPoll()->options as $option)
+        foreach($event->poll->options as $option)
         {...}
     }
 }
@@ -390,18 +369,9 @@ final class SendPollCreatedEmailListener implements ShouldQueue
 ```php
 final class PollOptionAdded
 {
-    /** @var Poll */
-    private $poll;
-    
-    public function __construct(Poll $poll)
-    {
-        $this->poll = $poll;
-    }
-    
-    public function getPoll(): Poll
-    {
-        return $this->poll;
-    }
+    public function __construct(
+        public readonly Poll $poll
+    ) {}
 }
 
 final class PollService
@@ -425,7 +395,7 @@ final class SomeListener implements ShouldQueue
     public function handle(PollOptionAdded $event)
     {
         // ...
-        foreach($event->getPoll()->options as $option)
+        foreach($event->poll->options as $option)
         {...}
     }
 }
