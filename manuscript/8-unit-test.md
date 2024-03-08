@@ -680,78 +680,78 @@ Laravel не только предлагает их использовать, н
 Давайте напишем один из предыдущих примеров с использованием Laravel-фасадов и протестируем этот код:
 
 ```php
-class Poll extends Model
+final class Survey extends Model
 {
-    public function options()
+    public function answers()
     {
-        return $this->hasMany(PollOption::class);
+        return $this->hasMany(SurveyAnswer::class);
     }
 }
 
-class PollOption extends Model
+final class SurveyAnswer extends Model
 {
 }
 
-class PollCreated
+final class SurveyCreated
 {
     public function __construct(
-        public readonly int $pollId
+        public readonly int $surveyId
     ) {}
 }
 
-class PollCreateDto
+final class SurveyCreateDto
 {
     public function __construct(
         public readonly string $title,
         /** @var string[] */ 
-        public readonly array $options,
+        public readonly array $answers,
     ) {}
 }
 
-class PollService
+final class SurveyService
 {
-    public function create(PollCreateDto $dto)
+    public function create(SurveyCreateDto $dto)
     {
-        if(count($dto->options) < 2) {
+        if(count($dto->answers) < 2) {
             throw new BusinessException(
-                "Please provide at least 2 options");
+                "Please provide at least 2 answers");
         }
 
-        $poll = new Poll();
+        $survey = new Survey();
 
-        \DB::transaction(function() use ($dto, $poll) {
-            $poll->title = $dto->title;
-            $poll->save();
+        \DB::transaction(function() use ($dto, $survey) {
+            $survey->title = $dto->title;
+            $survey->save();
 
-            foreach ($dto->options as $option) {
-                $poll->options()->create([
-                    'text' => $option,
+            foreach ($dto->answers as $answer) {
+                $survey->answers()->create([
+                    'text' => $answer,
                 ]);
             }
         });
 
-        \Event::dispatch(new PollCreated($poll->id));
+        \Event::dispatch(new SurveyCreated($survey->id));
     }
 }
 
-class PollServiceTest extends TestCase
+class SurveyServiceTest extends TestCase
 {
     public function testCreate()
     {
         \Event::fake();
 
-        $postService = new PollService();
-        $postService->create(new PollCreateDto(
+        $postService = new SurveyService();
+        $postService->create(new SurveyCreateDto(
             'test title', 
-            ['option1', 'option2']));
+            ['answer1', 'answer2']));
 
-        \Event::assertDispatched(PollCreated::class);
+        \Event::assertDispatched(SurveyCreated::class);
     }
 }
 ```
 
 * Вызов **\Event::fake()** трансформирует Laravel-фасад **Event** в мок-объект.
-* Метод **PostService::create** создаёт опрос с опциями ответа, сохраняет его в базу данных и генерирует событие **PollCreated**.
+* Метод **SurveyService::create** создаёт опрос с вариантами ответа, сохраняет его в базу данных и генерирует событие **SurveyCreated**.
 * Вызов **\Event::assertDispatched** проверяет, что это событие было вызвано.
 
 Я вижу несколько недостатков:
@@ -763,8 +763,8 @@ class PollServiceTest extends TestCase
 Это очень медленно.
 Один такой тест может быть выполнен за разумное время, но сотни таких займут уже несколько минут и никто не будет их выполнять после каждой мелкой правки.
 * Тесты проверяют только генерацию событий.
-Для того чтобы проверить создание записей в базе данных нужно использовать вызовы методов, таких как **assertDatabaseHas** или что-то вроде **PollService::getById**, которое делает этот тест неким функциональным тестом к Слою Приложения, поскольку он просит Слой Приложения что-то сделать и проверяет результат тоже вызвав его. 
-* Зависимости класса **PollService** не описаны явно.
+Для того чтобы проверить создание записей в базе данных нужно использовать вызовы методов, таких как **assertDatabaseHas** или что-то вроде **SurveyService::getById**, которое делает этот тест неким функциональным тестом к Слою Приложения, поскольку он просит Слой Приложения что-то сделать и проверяет результат тоже вызвав его. 
+* Зависимости класса **SurveyService** не описаны явно.
 Фасад **Event** вызывается где-то внутри. 
 Чтобы понять, что конкретно он требует для своей работы, нужно просмотреть весь его код.
 Это делает написание тестов для него весьма неудобным.
@@ -781,7 +781,7 @@ class PollServiceTest extends TestCase
 
 ### Отсоединяем код от laravel-фасадов
 
-Для того чтобы протестировать метод **PollService::create** в изоляции, нужно убрать использование Laravel-фасадов и базы данных (Eloquent).
+Для того чтобы протестировать метод **SurveyService::create** в изоляции, нужно убрать использование Laravel-фасадов и базы данных (Eloquent).
 Первая часть несложная, у нас есть Внедрение Зависимостей.
 
 * Фасад **\Event** представляет интерфейс **Illuminate\Contracts\Events\Dispatcher**.
@@ -809,7 +809,7 @@ class DatabaseManager
 Но нам будет достаточно только использования **ConnectionInterface** напрямую.
 
 ```php
-class PollService
+class SurveyService
 {
     /** @var \Illuminate\Database\ConnectionInterface */
     private $connection;
@@ -824,27 +824,27 @@ class PollService
         $this->dispatcher = $dispatcher;
     }
 
-    public function create(PollCreateDto $dto)
+    public function create(SurveyCreateDto $dto)
     {
-        if(count($dto->options) < 2) {
+        if(count($dto->answers) < 2) {
             throw new BusinessException(
-                "Please provide at least 2 options");
+                "Please provide at least 2 answers");
         }
 
-        $poll = new Poll();
+        $survey = new Survey();
 
-        $this->connection->transaction(function() use ($dto, $poll) {
-            $poll->title = $dto->title;
-            $poll->save();
+        $this->connection->transaction(function() use ($dto, $survey) {
+            $survey->title = $dto->title;
+            $survey->save();
 
-            foreach ($dto->options as $option) {
-                $poll->options()->create([
-                    'text' => $option,
+            foreach ($dto->answers as $answer) {
+                $survey->answers()->create([
+                    'text' => $answer,
                 ]);
             }
         });
 
-        $this->dispatcher->dispatch(new PollCreated($poll->id));
+        $this->dispatcher->dispatch(new SurveyCreated($survey->id));
     }
 }
 ```
@@ -856,28 +856,28 @@ class PollService
 use Illuminate\Support\Testing\Fakes\EventFake;
 //...
 
-class PollServiceTest extends TestCase
+class SurveyServiceTest extends TestCase
 {
-    public function testCreatePoll()
+    public function testCreateSurvey()
     {
         $eventFake = new EventFake(
             $this->createMock(Dispatcher::class));
 
-        $postService = new PollService(
+        $postService = new SurveyService(
             new FakeConnection(), $eventFake);
         
-        $postService->create(new PollCreateDto(
+        $postService->create(new SurveyCreateDto(
             'test title',
-            ['option1', 'option2']));
+            ['answer1', 'answer2']));
 
-        $eventFake->assertDispatched(PollCreated::class);
+        $eventFake->assertDispatched(SurveyCreated::class);
     }
 }
 ```
 
-Этот тест выглядит очень похоже на прошлый, с фасадами, но теперь он намного строже с зависимостями класса **PollService**.
+Этот тест выглядит очень похоже на прошлый, с фасадами, но теперь он намного строже с зависимостями класса **SurveyService**.
 Но не совсем.
-Любой разработчик всё еще может использовать любой фасад внутри класса **PollService** и тест будет продолжать работать.
+Любой разработчик всё еще может использовать любой фасад внутри класса **SurveyService** и тест будет продолжать работать.
 Это происходит потому, что здесь используется специальный базовый класс для тестов, предоставляемый Laravel, который полностью настраивает рабочее окружение.
 
 ```php
@@ -912,36 +912,36 @@ Error : Class 'SomeFacade' not found
 Создадим класс репозитория (шаблон **Репозиторий**), чтобы собрать в нём всю работу с базой данных.
 
 ```php
-interface PollRepository
+interface SurveyRepository
 {
     //... другие методы
 
-    public function save(Poll $poll);
+    public function save(Survey $survey);
 
-    public function saveOption(PollOption $pollOption);
+    public function saveAnswer(SurveyAnswer $answer);
 }
 
-class EloquentPollRepository implements PollRepository
+class EloquentSurveyRepository implements SurveyRepository
 {
     //... другие методы
 
-    public function save(Poll $poll)
+    public function save(Survey $survey)
     {
-        $poll->save();
+        $survey->save();
     }
 
-    public function saveOption(PollOption $pollOption)
+    public function saveAnswer(SurveyAnswer $answer)
     {
-        $pollOption->save();
+        $answer->save();
     }
 }
 
-class PollService
+class SurveyService
 {
     /** @var \Illuminate\Database\ConnectionInterface */
     private $connection;
 
-    /** @var PollRepository */
+    /** @var SurveyRepository */
     private $repository;
 
     /** @var \Illuminate\Contracts\Events\Dispatcher */
@@ -949,7 +949,7 @@ class PollService
 
     public function __construct(
         ConnectionInterface $connection, 
-        PollRepository $repository, 
+        SurveyRepository $repository, 
         Dispatcher $dispatcher)
     {
         $this->connection = $connection;
@@ -957,68 +957,68 @@ class PollService
         $this->dispatcher = $dispatcher;
     }
 
-    public function create(PollCreateDto $dto)
+    public function create(SurveyCreateDto $dto)
     {
-        if(count($dto->options) < 2) {
+        if(count($dto->answers) < 2) {
             throw new BusinessException(
-                "Please provide at least 2 options");
+                "Please provide at least 2 answers");
         }
 
-        $poll = new Poll();
+        $survey = new Survey();
 
-        $this->connection->transaction(function() use ($dto, $poll) {
-            $poll->title = $dto->title;
-            $this->repository->save($poll);
+        $this->connection->transaction(function() use ($dto, $survey) {
+            $survey->title = $dto->title;
+            $this->repository->save($survey);
 
-            foreach ($dto->options as $optionText) {
-                $pollOption = new PollOption();
-                $pollOption->poll_id = $poll->id;
-                $pollOption->text = $optionText;
+            foreach ($dto->answers as $answerText) {
+                $answer = new SurveyAnswer();
+                $answer->survey_id = $survey->id;
+                $answer->text = $answerText;
 
-                $this->repository->saveOption($pollOption);
+                $this->repository->saveAnswer($answer);
             }
         });
 
-        $this->dispatcher->dispatch(new PollCreated($poll->id));
+        $this->dispatcher->dispatch(new SurveyCreated($survey->id));
     }
 }
 
-class PollServiceTest extends \PHPUnit\Framework\TestCase
+class SurveyServiceTest extends \PHPUnit\Framework\TestCase
 {
-    public function testCreatePoll()
+    public function testCreateSurvey()
     {
         $eventFake = new EventFake(
             $this->createMock(Dispatcher::class));
 
-        $repositoryMock = $this->createMock(PollRepository::class);
+        $repositoryMock = $this->createMock(SurveyRepository::class);
 
         $repositoryMock->method('save')
-            ->with($this->callback(function(Poll $poll) {
-                return $poll->title == 'test title';
+            ->with($this->callback(function(Survey $survey) {
+                return $survey->title == 'test title';
             }));
 
         $repositoryMock->expects($this->at(2))
-            ->method('saveOption');
+            ->method('saveAnswer');
 
-        $postService = new PollService(
+        $postService = new SurveyService(
             new FakeConnection(), $repositoryMock, $eventFake);
         
-        $postService->create(new PollCreateDto(
+        $postService->create(new SurveyCreateDto(
             'test title',
-            ['option1', 'option2']));
+            ['answer1', 'answer2']));
 
-        $eventFake->assertDispatched(PollCreated::class);
+        $eventFake->assertDispatched(SurveyCreated::class);
     }
 }
 ```
 
 Это корректный unit-тест.
-Класс **PollService** был протестирован в полной изоляции, не касаясь среды Laravel и базы данных.
+Класс **SurveyService** был протестирован в полной изоляции, не касаясь среды Laravel и базы данных.
 Но почему это не радует меня?
 Причины в следующем:
 
 * Я был вынужден создать абстракцию с репозиторием исключительно для того, чтобы написать unit-тесты.
-Код класса **PollService** без него выглядит в разы читабельнее, что весьма важно.
+Код класса **SurveyService** без него выглядит в разы читабельнее, что весьма важно.
 Это похоже на шаблон **Репозиторий**, но не является им.
 Он просто пытается заменить операции Eloquent с базой данных.
 Если объект опроса будет иметь больше отношений, то придётся реализовывать методы **save%ИмяОтношения%** для каждого из них.
@@ -1034,8 +1034,8 @@ class PollServiceTest extends \PHPUnit\Framework\TestCase
 Это сложно измерить, но мне кажется, что польза от таких тестов намного меньше усилий затрачиваемых на них и урону читабельности кода.
 В начале этой главы я сказал, что Unit-тесты - одни из лучших индикаторов качества кода в проекте.
 Если код сложно тестировать, скорее всего он обладает высокой связанностью.
-Класс **PollService** точно обладает.
-Он содержит основную логику (проверку количества опций ответа и создание сущности с опциями), а также логику приложения (транзакции базы данных, генерация событий, запросы к API и т.д.).
+Класс **SurveyService** точно обладает.
+Он содержит основную логику (проверку количества вариантов ответа и создание сущности), а также логику приложения (транзакции базы данных, генерация событий, запросы к API и т.д.).
 Это можно исправить выделив из класса эту самую основную логику. 
 Об этом мы поговорим в следующей главе. 
 
