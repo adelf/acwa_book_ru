@@ -1,7 +1,5 @@
 # События
 
-A> Правило прокрастинатора: если что-то можно отложить, это надо отложить.
-
 Действие Слоя Приложения всегда содержит главную часть, где выполняется основная логика действия, а также некоторые дополнительные действия.
 Регистрация пользователя состоит из, собственно, создания сущности пользователя, а также посылки соответствующего письма.
 Обновление текста статьи содержит обновление значения **$post->text** с сохранением сущности, а также, например вызов **Cache::forget** для инвалидации кеша.
@@ -12,25 +10,25 @@ A> Правило прокрастинатора: если что-то можн�
 final class SurveyService
 {
     public function __construct(
-        private BadWordsFilter $badWordsFilter
+        private ProfanityFilter $profanityFilter
         /*, ... другие зависимости */
     ) {}
     
     public function create(SurveyCreateDto $request)
     {
         $survey = new Survey();
-        $survey->question = $this->badWordsFilter->filter(
+        $survey->question = $this->profanityFilter->filter(
             $request->getQuestion());
         //...
         $survey->save();
         
-        foreach($request->getAnswers() as $answerText)
+        foreach($request->getOptions() as $optionText)
         {
-            $answer = new SurveyAnswer();
-            $answer->survey_id = $survey->id;
-            $answer->text = 
-                    $this->badWordsFilter->filter($answerText);
-            $answer->save();
+            $option = new SurveyOption();
+            $option->survey_id = $survey->id;
+            $option->text = 
+                    $this->profanityFilter->filter($optionText);
+            $option->save();
         }
         
         // Вызов генерации sitemap
@@ -65,17 +63,17 @@ final class SurveyService
     {
         $this->connection->transaction(function() use ($request) {
             $survey = new Survey();
-            $survey->question = $this->badWordsFilter->filter(
+            $survey->question = $this->profanityFilter->filter(
                     $request->getQuestion());
             //...
             $survey->save();
             
-            foreach($request->getAnswers() as $answerText) {
-                $answer = new SurveyAnswer();
-                $answer->survey_id = $survey->id;
-                $answer->text = 
-                    $this->badWordsFilter->filter($answerText);
-                $answer->save();
+            foreach($request->getOptions() as $optionText) {
+                $option = new SurveyOption();
+                $option->survey_id = $survey->id;
+                $option->text = 
+                    $this->profanityFilter->filter($optionText);
+                $option->save();
             }
             
             // Вызов генерации sitemap
@@ -107,12 +105,12 @@ public function create(SurveyCreateDto $request)
             //...
             $survey->save();
             
-            foreach($filteredRequest->getAnswers() 
-                                as $answerText) {
-                $answer = new SurveyAnswer();
-                $answer->survey_id = $survey->id;
-                $answer->text = $answerText;
-                $answer->save();
+            foreach($filteredRequest->getOptions() 
+                                as $optionText) {
+                $option = new SurveyOption();
+                $option->survey_id = $survey->id;
+                $option->text = $optionText;
+                $option->save();
             }
         });
     
@@ -303,11 +301,11 @@ public function create(SurveyCreateDto $request)
         //...
         $survey->save();
         
-        foreach($filteredRequest->getAnswers() as $answerText){
-            $answer = new SurveyAnswer();
-            $answer->survey_id = $survey->id;
-            $answer->text = $answerText;
-            $answer->save();
+        foreach($filteredRequest->getOptions() as $optionText){
+            $option = new SurveyOption();
+            $option->survey_id = $survey->id;
+            $option->text = $optionText;
+            $option->save();
         }
     });
     //...
@@ -357,17 +355,17 @@ final class SendSurveyCreatedEmailListener implements ShouldQueue
     public function handle(SurveyCreated $event)
     {
         // ...
-        foreach($event->survey->answers as $answer)
+        foreach($event->survey->options as $option)
         {...}
     }
 }
 ```
 Это простой пример слушателя, который использует значения **HasMany**-отношения.
-Этот код работает. Когда выполняется код **$event->survey->answers** Eloquent делает запрос в базу данных и получает все варианты ответа.
+Этот код работает. Когда выполняется код **$event->survey->options** Eloquent делает запрос в базу данных и получает все варианты ответа.
 Другой пример:
 
 ```php
-final class SurveyAnswerAdded
+final class SurveyOptionAdded
 {
     public function __construct(
         public readonly Survey $survey
@@ -376,26 +374,26 @@ final class SurveyAnswerAdded
 
 final class SurveyService
 {
-public function addAnswer(SurveyAddAnswerDto $request)
+public function addOption(SurveyAddOptionDto $request)
 {
     $survey = Survey::findOrFail($request->getSurveyId());
     
-    if($survey->answers->count() >= Survey::MAX_POSSIBLE_ANSWERS) {
-        throw new BusinessException('Max answers amount exceeded');
+    if($survey->options->count() >= Survey::MAX_POSSIBLE_OPTIONS) {
+        throw new BusinessException('Max options amount exceeded');
     }
 
-    $survey->answers()->create(...);
+    $survey->options()->create(...);
     
-    $this->dispatcher->dispatch(new SurveyAnswerAdded($survey));
+    $this->dispatcher->dispatch(new SurveyOptionAdded($survey));
 }
 }
 
 final class SomeListener implements ShouldQueue
 {
-    public function handle(SurveyAnswerAdded $event)
+    public function handle(SurveyOptionAdded $event)
     {
         // ...
-        foreach($event->survey->answers as $answer)
+        foreach($event->survey->options as $option)
         {...}
     }
 }
@@ -403,13 +401,13 @@ final class SomeListener implements ShouldQueue
 
 А вот тут уже не все хорошо.
 Когда сервисный класс проверяет количество вариантов ответа, он получает свежую коллекцию текущих вариантов ответа данного опроса.
-Потом он добавляет новый вариант ответа, вызвав **$survey->answers()->create(...)**;
-Дальше, слушатель, выполняя **$event->survey->answers** получает старую версию вариантов ответа, без новосозданной.
-Это поведение Eloquent, который имеет два механизма работы с отношениями. Метод **answers()** и псевдо-поле **answers**, которое вроде бы и соответствует этому методу, но хранит свою версию данных.
+Потом он добавляет новый вариант ответа, вызвав **$survey->options()->create(...)**;
+Дальше, слушатель, выполняя **$event->survey->options** получает старую версию вариантов ответа, без новосозданной.
+Это поведение Eloquent, который имеет два механизма работы с отношениями. Метод **options()** и псевдо-поле **options**, которое вроде бы и соответствует этому методу, но хранит свою версию данных.
 Поэтому, передавая сущность в события, разработчик должен озаботиться консистентностью значений в отношениях, например вызвав:
 
 ```php
-$survey->load('answers');
+$survey->load('options');
 ```
 
 до передачи объекта в событие.

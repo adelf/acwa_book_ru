@@ -1,7 +1,5 @@
 # Unit-тестирование
 
-A> 100% покрытие тестами должно быть следствием, а не целью.
-
 ## Первые шаги
 
 Вы, вероятно, уже слышали про unit-тестирование.
@@ -682,13 +680,13 @@ Laravel не только предлагает их использовать, н
 ```php
 final class Survey extends Model
 {
-    public function answers()
+    public function options()
     {
-        return $this->hasMany(SurveyAnswer::class);
+        return $this->hasMany(SurveyOption::class);
     }
 }
 
-final class SurveyAnswer extends Model
+final class SurveyOption extends Model
 {
 }
 
@@ -704,7 +702,7 @@ final class SurveyCreateDto
     public function __construct(
         public readonly string $title,
         /** @var string[] */ 
-        public readonly array $answers,
+        public readonly array $options,
     ) {}
 }
 
@@ -712,9 +710,9 @@ final class SurveyService
 {
     public function create(SurveyCreateDto $dto)
     {
-        if(count($dto->answers) < 2) {
+        if(count($dto->options) < 2) {
             throw new BusinessException(
-                "Please provide at least 2 answers");
+                "Please provide at least 2 options");
         }
 
         $survey = new Survey();
@@ -723,9 +721,9 @@ final class SurveyService
             $survey->title = $dto->title;
             $survey->save();
 
-            foreach ($dto->answers as $answer) {
-                $survey->answers()->create([
-                    'text' => $answer,
+            foreach ($dto->options as $option) {
+                $survey->options()->create([
+                    'text' => $option,
                 ]);
             }
         });
@@ -743,7 +741,7 @@ class SurveyServiceTest extends TestCase
         $postService = new SurveyService();
         $postService->create(new SurveyCreateDto(
             'test title', 
-            ['answer1', 'answer2']));
+            ['option1', 'option2']));
 
         \Event::assertDispatched(SurveyCreated::class);
     }
@@ -811,24 +809,16 @@ class DatabaseManager
 ```php
 class SurveyService
 {
-    /** @var \Illuminate\Database\ConnectionInterface */
-    private $connection;
-
-    /** @var \Illuminate\Contracts\Events\Dispatcher */
-    private $dispatcher;
-
     public function __construct(
-        ConnectionInterface $connection, Dispatcher $dispatcher)
-    {
-        $this->connection = $connection;
-        $this->dispatcher = $dispatcher;
-    }
+        private ConnectionInterface $connection, 
+        private Dispatcher $dispatcher
+    ) {}
 
     public function create(SurveyCreateDto $dto)
     {
-        if(count($dto->answers) < 2) {
+        if(count($dto->options) < 2) {
             throw new BusinessException(
-                "Please provide at least 2 answers");
+                "Please provide at least 2 options");
         }
 
         $survey = new Survey();
@@ -837,9 +827,9 @@ class SurveyService
             $survey->title = $dto->title;
             $survey->save();
 
-            foreach ($dto->answers as $answer) {
-                $survey->answers()->create([
-                    'text' => $answer,
+            foreach ($dto->options as $option) {
+                $survey->options()->create([
+                    'text' => $option,
                 ]);
             }
         });
@@ -868,7 +858,7 @@ class SurveyServiceTest extends TestCase
         
         $postService->create(new SurveyCreateDto(
             'test title',
-            ['answer1', 'answer2']));
+            ['option1', 'option2']));
 
         $eventFake->assertDispatched(SurveyCreated::class);
     }
@@ -918,7 +908,7 @@ interface SurveyRepository
 
     public function save(Survey $survey);
 
-    public function saveAnswer(SurveyAnswer $answer);
+    public function saveOption(SurveyOption $option);
 }
 
 class EloquentSurveyRepository implements SurveyRepository
@@ -930,38 +920,25 @@ class EloquentSurveyRepository implements SurveyRepository
         $survey->save();
     }
 
-    public function saveAnswer(SurveyAnswer $answer)
+    public function saveOption(SurveyOption $option)
     {
-        $answer->save();
+        $option->save();
     }
 }
 
 class SurveyService
 {
-    /** @var \Illuminate\Database\ConnectionInterface */
-    private $connection;
-
-    /** @var SurveyRepository */
-    private $repository;
-
-    /** @var \Illuminate\Contracts\Events\Dispatcher */
-    private $dispatcher;
-
     public function __construct(
-        ConnectionInterface $connection, 
-        SurveyRepository $repository, 
-        Dispatcher $dispatcher)
-    {
-        $this->connection = $connection;
-        $this->repository = $repository;
-        $this->dispatcher = $dispatcher;
-    }
+        private ConnectionInterface $connection, 
+        private SurveyRepository $repository, 
+        private Dispatcher $dispatcher
+    ) {}
 
     public function create(SurveyCreateDto $dto)
     {
-        if(count($dto->answers) < 2) {
+        if(count($dto->options) < 2) {
             throw new BusinessException(
-                "Please provide at least 2 answers");
+                "Please provide at least 2 options");
         }
 
         $survey = new Survey();
@@ -970,12 +947,12 @@ class SurveyService
             $survey->title = $dto->title;
             $this->repository->save($survey);
 
-            foreach ($dto->answers as $answerText) {
-                $answer = new SurveyAnswer();
-                $answer->survey_id = $survey->id;
-                $answer->text = $answerText;
+            foreach ($dto->options as $optionText) {
+                $option = new SurveyOption();
+                $option->survey_id = $survey->id;
+                $option->text = $optionText;
 
-                $this->repository->saveAnswer($answer);
+                $this->repository->saveOption($option);
             }
         });
 
@@ -998,14 +975,14 @@ class SurveyServiceTest extends \PHPUnit\Framework\TestCase
             }));
 
         $repositoryMock->expects($this->at(2))
-            ->method('saveAnswer');
+            ->method('saveOption');
 
         $postService = new SurveyService(
             new FakeConnection(), $repositoryMock, $eventFake);
         
         $postService->create(new SurveyCreateDto(
             'test title',
-            ['answer1', 'answer2']));
+            ['option1', 'option2']));
 
         $eventFake->assertDispatched(SurveyCreated::class);
     }
