@@ -160,11 +160,9 @@ use Illuminate\Contracts\Bus\Dispatcher;
 
 final class SurveyService
 {
-    public function __construct(
-        ..., 
-        private Dispatcher $dispatcher) 
-    {
-    }
+    public function __construct(..., 
+        private Dispatcher $dispatcher
+    ) {}
         
     public function create(SurveyCreateDto $request)
     {
@@ -205,14 +203,9 @@ use Illuminate\Contracts\Events\Dispatcher;
 
 final class SurveyService
 {
-    /** @var Dispatcher */
-    private $dispatcher;
-    
-    public function __construct(..., Dispatcher $dispatcher) 
-    {
-        ...
-        $this->dispatcher = $dispatcher;
-    }
+    public function __construct(..., 
+        private Dispatcher $dispatcher
+    ) {}
 
     public function create(SurveyCreateDto $request)
     {
