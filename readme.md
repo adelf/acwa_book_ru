@@ -6,15 +6,15 @@ Telegram канал автора - https://t.me/adelf_on_programming
 
 Бумажная книга (издательство БХВ):
 
-На сайте издательства: https://bhv.ru/product/arhitektura-clozhnyh-veb-prilozhenij-c-primerami-na-laravel/
+[На сайте издательства](https://bhv.ru/product/arhitektura-clozhnyh-veb-prilozhenij-c-primerami-na-laravel/)
 
-Ozon: https://www.ozon.ru/product/arhitektura-clozhnyh-veb-prilozheniy-s-primerami-na-laravel-fayzrahmanov-adel-2834482220/
+[Ozon](https://www.ozon.ru/product/arhitektura-clozhnyh-veb-prilozheniy-s-primerami-na-laravel-fayzrahmanov-adel-2834482220/)
 
-Wilberries: https://www.wildberries.ru/catalog/529181932/detail.aspx
+[Wilberries](https://www.wildberries.ru/catalog/529181932/detail.aspx)
 
-Читай-город: https://www.chitai-gorod.ru/product/arhitektura-cloznyh-veb-prilozenij-s-primerami-na-laravel-3125294
+[Читай-город](https://www.chitai-gorod.ru/product/arhitektura-cloznyh-veb-prilozenij-s-primerami-na-laravel-3125294)
 
-Flip.kz(Казахстан): https://www.flip.kz/catalog?prod=5342703
+[Flip.kz(Казахстан)](https://www.flip.kz/catalog?prod=5342703)
 
 Оглавление:
 
