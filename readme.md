@@ -2,9 +2,21 @@
 
 Автор: Адель Файзрахманов, автор плагина **Laravel Idea** для **PhpStorm**.
 
-[<img align="right" src="https://laravel-idea.com/img/big_logo.png" title="Laravel Idea"/>](https://laravel-idea.com/?utm_medium=book&utm_source=book_architecture&utm_campaign=link_in_description) [Laravel Idea](https://laravel-idea.com/?utm_medium=book&utm_source=book_architecture&utm_campaign=link_in_description) — расширение для платформы IDEA (PhpStorm), экономящее время при разработке решений на основе Laravel. Прекрасное автозаполнение магии Laravel, навигация по коду, генераторы кода, автокомплит валидаторов и роутов, и многое другое. © [laravel.su](https://laravel.su)
-
 Telegram канал автора - https://t.me/adelf_on_programming
+
+Бумажная книга (издательство БХВ):
+
+На сайте издательства: https://bhv.ru/product/arhitektura-clozhnyh-veb-prilozhenij-c-primerami-na-laravel/
+
+Ozon: https://www.ozon.ru/product/arhitektura-clozhnyh-veb-prilozheniy-s-primerami-na-laravel-fayzrahmanov-adel-2834482220/
+
+Wilberries: https://www.wildberries.ru/catalog/529181932/detail.aspx
+
+Читай-город: https://www.chitai-gorod.ru/product/arhitektura-cloznyh-veb-prilozenij-s-primerami-na-laravel-3125294
+
+Flip.kz(Казахстан): https://www.flip.kz/catalog?prod=5342703
+
+Оглавление:
 
 0. [Предисловие](manuscript/0-intro.md) — очень короткое, но важное
 1. [Плохие привычки](manuscript/1-bad-habits.md)
