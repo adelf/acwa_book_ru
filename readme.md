@@ -10,7 +10,7 @@ Telegram канал автора - https://t.me/adelf_on_programming
 
 [Ozon](https://www.ozon.ru/product/arhitektura-clozhnyh-veb-prilozheniy-s-primerami-na-laravel-fayzrahmanov-adel-2834482220/)
 
-[Wilberries](https://www.wildberries.ru/catalog/529181932/detail.aspx)
+[Wilberries](https://www.wildberries.ru/catalog/0/search.aspx?search=%D0%90%D1%80%D1%85%D0%B8%D1%82%D0%B5%D0%BA%D1%82%D1%83%D1%80%D0%B0+%D1%81%D0%BB%D0%BE%D0%B6%D0%BD%D1%8B%D1%85+%D0%B2%D0%B5%D0%B1-%D0%BF%D1%80%D0%B8%D0%BB%D0%BE%D0%B6%D0%B5%D0%BD%D0%B8%D0%B9.+%D0%A1+%D0%BF%D1%80%D0%B8%D0%BC%D0%B5%D1%80%D0%B0%D0%BC%D0%B8+%D0%BD%D0%B0+Laravel)
 
 [Читай-город](https://www.chitai-gorod.ru/product/arhitektura-cloznyh-veb-prilozenij-s-primerami-na-laravel-3125294)
 
